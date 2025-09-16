@@ -800,8 +800,8 @@ chmod +x trimmed_fastq_read_length_summary.sh
 ./trimmed_fastq_read_length_summary.sh
 ```
 # 3️⃣ Aggregate QC Reports with **MultiQC**
+[`MultiQC`](https://github.com/MultiQC/MultiQC) 
 
-[`MultiQC`]([https://github.com/MultiQC/MultiQC]) 
 <details>
 <summary>📊 Aggregating QC with MultiQC</summary>
 
@@ -868,7 +868,7 @@ conda activate multiqc_env
 ./run_multiqc.sh
 ```
 # 4️⃣ Drug Resistance Screening with **TB-Profiler**
-Before running TB-Profiler, we perform quality checks on raw FASTQ files and exclude samples with extremely low-quality reads. However, since TB-Profiler internally uses Trimmomatic to trim adapters and low-quality bases, it is not necessary to pre-trim the reads. Therefore, only quality-checked FASTQ files are provided as input to TB-Profiler, allowing it to handle trimming and variant calling internally.
+Before running [`TB-Profiler`](https://github.com/jodyphelan/TBProfiler), we perform quality checks on raw FASTQ files and exclude samples with extremely low-quality reads. However, since TB-Profiler internally uses Trimmomatic to trim adapters and low-quality bases, it is not necessary to pre-trim the reads. Therefore, only quality-checked FASTQ files are provided as input to TB-Profiler, allowing it to handle trimming and variant calling internally.
 
 <details>
 <summary>🧬 TB-Profiler: Variant Calling, Lineage, and Drug Resistance</summary>
@@ -892,7 +892,6 @@ Before running TB-Profiler, we perform quality checks on raw FASTQ files and exc
 ---
 
 ## Steps
-
 ##### Step 1: Create or edit the script
 ```bash
 nano run_tbprofiler.sh
@@ -929,8 +928,6 @@ for R1 in "$FASTQ_DIR"/*_1.fastq.gz; do
 done
 
 echo "📌 All samples processed!"
-
-
 ```
 <details>
 <summary>🧪 TB-Profiler Script Explanation</summary>
@@ -947,7 +944,6 @@ echo "📌 All samples processed!"
 - `echo "📌 All samples processed!"` → Final message after all samples are run.
 
 </details>
-
 
 ##### Step 3: Save and exit nano
 Press Ctrl + O → Enter (to write the file)
@@ -1018,6 +1014,7 @@ echo "✅ Collated all tbprofiler.txt files into tbprofiler_collated.csv"
 
 # 5️⃣ Variant Calling with **Snippy**
 
+[`Snippy`](https://github.com/tseemann/snippy) 
 <details>
 <summary>🧬 Detailed Overview: Variant Calling with Snippy</summary>
 
@@ -1152,7 +1149,6 @@ echo "Snippy results are in: ${OUTDIR}/"
 
 </details>
 
-
 ##### Step 3: Save and exit nano
 Press Ctrl + O, then Enter (save)
 Press Ctrl + X (exit)
@@ -1190,6 +1186,7 @@ done
 ```
 
 # 6️⃣ BAM Quality Check with **Qualimap**
+[`Qualimap`](http://qualimap.conesalab.org/) 
 <details>
 <summary>📈 BAM Quality Assessment with Qualimap</summary>
 
@@ -1267,7 +1264,7 @@ conda activate qualimap_env
 ```
 
 ### Run MultiQC on Qualimap outputs
-
+[`MultiQC`](https://github.com/MultiQC/MultiQC) 
 <details>
 <summary>📊 Aggregating BAM QC with MultiQC</summary>
 
@@ -1335,6 +1332,7 @@ conda activate multiqc_env
 ```
 
 # 7️⃣ High-Confidence Variant Filtering with **tb_variant_filter**
+[`tb_variant_filter`](https://github.com/COMBAT-TB/tb_variant_filter) 
 <details>
 <summary>🧬 TB-Specific Variant Filtering with <code>tb_variant_filter</code></summary>
 
@@ -1513,24 +1511,16 @@ This QC step ensures that your filtered VCFs retain high-confidence variants and
 ---
 
 ### What the Script Does
-
 For each sample:
-
 **Unfiltered VCF analysis**
-
 - Counts all variants (`Unfiltered_total`).
 - Counts variants meeting `DP ≥ 20` and `QUAL ≥ 30` (`Unfiltered_PASS`).
-
 **Filtered VCF analysis**
-
 - Counts all variants in the filtered VCF (`Filtered_total`).
 - Counts variants meeting `DP ≥ 20` and `QUAL ≥ 30` (`Filtered_PASS`).
-
 **Calculate PASS retention ratio**
-
 - `PASS_retention_ratio = Filtered_PASS / Unfiltered_PASS`  
 - Measures how many high-quality variants remain after filtering.
-
 ---
 
 ### Output Table Columns
@@ -1615,7 +1605,6 @@ for vcf in "$SNIPPY_DIR"/*.vcf; do
 
     echo "$sample,$unfiltered_total,$unfiltered_pass,$filtered_total,$filtered_pass,$ratio" | tee -a "$OUTFILE"
 done
-
 ```
 
 ##### Step  3: Save and exit nano
@@ -1630,8 +1619,8 @@ chmod +x compare_vcf_qc.sh
 ./compare_vcf_qc.sh
 ```
 
-# 8️⃣ Consensus Genome Generation with **BCFtools** & Outgroup Inclusion
-
+# 8️⃣ Consensus Genome Generation with **BCFtools / SAMtools** & Outgroup Inclusion
+[`BCFtools`](https://github.com/samtools/bcftools) / [`SAMtools`](https://github.com/samtools/samtools)
 <details>
 <summary>🧬 Generate Sample-Specific Consensus Sequences</summary>
 
@@ -1835,7 +1824,7 @@ echo "✅ Consensus genome lengths saved to $OUTPUT_CSV"
 
 # 9️⃣ Multiple Sequence Alignment
 
-MAFFT requires **a single FASTA file** as input.  
+[`MAFFT`](https://github.com/GSLBiotech/mafft) requires **a single FASTA file** as input.  
 It **cannot take multiple FASTA files** on the command line directly, otherwise it interprets filenames as options.
 
 ---
@@ -2021,6 +2010,7 @@ Advantages:
 
 
 # 🔟 Phylogenetic Tree Construction with **IQ-TREE**
+[`IQ-TREE`](https://github.com/iqtree/iqtree2) 
 <details>
 <summary>📖 Overview of IQ-TREE and important concepts</summary>
 
@@ -2092,6 +2082,32 @@ iqtree2 -s mafft_results/aligned_consensus.fasta \
 - `-pre iqtree_results/aligned_consensus` → sets the output file prefix and saves all IQ-TREE results in `iqtree_results/` with this prefix.  
 
 </details>
+
+### 🌳 Visualization with TB-Profiler + iTOL
+
+TB-Profiler outputs can be integrated into [iTOL](https://itol.embl.de/) for rich phylogenetic visualization, combining resistance, lineage, and metadata.
+
+* **Drug resistance types**:  
+  - **HR-TB**: Isoniazid-resistant TB  
+  - **RR-TB**: Rifampicin-resistant TB  
+  - **MDR-TB**: Multidrug-resistant TB (at least INH + RIF resistant)  
+  - **XDR-TB**: Extensively drug-resistant TB (MDR + fluoroquinolone + second-line injectable resistant)  
+  - **Other**: Cases that do not fit the above categories  
+
+  These categories can be represented in iTOL as colored rings around the phylogeny for quick classification.  
+
+* **Individual drug resistance profiles**:  
+  Each anti-TB drug is represented as a binary dot in iTOL:  
+  - **Black dot** = Resistant  
+  - **White dot** = Susceptible  
+
+  This scheme provides a clear and compact way to compare resistance across isolates without cluttering the tree.  
+
+* **Lineages & Sublineages**:  
+  - Major M. tuberculosis lineages (1–10) can be highlighted with branch colors or background shading.  
+  - Sublineages (e.g. 4.2.2.2, 2.2.1) can be shown as labels or an extra ring.  
+
+
 
 # 📖 References
 
