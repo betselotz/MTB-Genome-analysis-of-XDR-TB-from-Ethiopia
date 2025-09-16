@@ -1,4 +1,79 @@
 
+🧪 Methodology
+
+This workflow describes the genomic analysis of Mycobacterium tuberculosis (MTB) strains exhibiting extensively drug-resistant TB (XDR-TB) from Ethiopia. It leverages high-throughput sequencing data and a series of bioinformatics tools to ensure reproducible, high-confidence results.
+
+1. Exploration and Summarization of Raw FASTQ Files
+
+Paired-end FASTQ files are initially explored to assess sequencing output.
+
+Metrics include number of reads, read length distribution, and base composition (A, T, G, C balance).
+
+Balanced base composition indicates high-quality sequencing data.
+
+2. Quality Control and Trimming with FASTP
+
+FASTP performs adapter removal, quality trimming, and filtering of low-quality reads.
+
+Pre- and post-processing metrics, including read count and read length distribution, are compared to evaluate FASTP effectiveness.
+
+Per-sample QC reports are generated in .html and .json formats.
+
+3. Aggregated Quality Reports with MultiQC
+
+MultiQC aggregates all FASTQ and FASTP results into a single interactive HTML report, enabling easy assessment of all samples simultaneously.
+
+4. TB-Profiler for Initial QC and Drug Resistance Prediction
+
+TB-Profiler is used to perform quality checks on raw FASTQ files.
+
+Samples with extremely low-quality reads are excluded from downstream analyses.
+
+Generates initial drug-resistance profiles for each isolate.
+
+5. Variant Calling with Snippy
+
+Snippy provides a rapid, reproducible pipeline for bacterial genome variant calling.
+
+Aligns reads to the H37Rv reference genome, producing BAM files and initial variant calls (VCFs).
+
+6. BAM File Quality Assessment with Qualimap
+
+Qualimap evaluates BAM file quality, checking metrics such as coverage, mapping quality, and read distribution.
+
+Ensures the data is suitable for downstream variant analyses.
+
+7. Variant Filtering with tb_variant_filter
+
+Filters out variants in Refined Low Confidence (RLC) regions, retaining only high-confidence variants.
+
+Specifically designed for M. tuberculosis sequencing data.
+
+8. Consensus Sequence Generation
+
+High-confidence variants are used to generate per-sample consensus FASTA sequences.
+
+Represents the full genome of each isolate relative to H37Rv.
+
+9. Outgroup Selection
+
+The outgroup SRR10828835 is included to root the phylogenetic tree, providing directionality to evolutionary analyses.
+
+10. Multiple Sequence Alignment
+
+All consensus sequences, including the outgroup, are aligned using MAFFT.
+
+Ensures consistent positional comparison of genomic variants across isolates.
+
+11. Phylogenetic Inference with IQ-TREE
+
+IQ-TREE constructs maximum-likelihood phylogenetic trees from aligned sequences.
+
+Ultrafast bootstrap with 1000 replicates assesses branch support.
+
+Final trees are visualized with TB-Profiler ITOL outputs, integrating resistance and metadata.
+
+
 # 1️⃣  Checking FASTQ
 
 ### FASTQ summary
@@ -374,8 +449,6 @@ chmod +x fastq_read_length_summary.sh
 ```bash
 ./fastq_read_length_summary.sh
 ```
-
-
 
 # 3️⃣ FASTP – Quality Control and Trimming
 
@@ -769,7 +842,6 @@ chmod +x trimmed_fastq_read_length_summary.sh
 ```bash
 ./trimmed_fastq_read_length_summary.sh
 ```
-
 # 4️⃣ MultiQC
 
 <details>
@@ -838,7 +910,7 @@ conda activate multiqc_env
 ./run_multiqc.sh
 ```
 # 9️⃣ TB-Profiler
-Before running TB-Profiler, we perform quality checks on raw FASTQ files using fastp and exclude samples with extremely low-quality reads. However, since TB-Profiler internally uses Trimmomatic to trim adapters and low-quality bases, it is not necessary to pre-trim the reads. Therefore, only quality-checked FASTQ files are provided as input to TB-Profiler, allowing it to handle trimming and variant calling internally.
+Before running TB-Profiler, we perform quality checks on raw FASTQ files and exclude samples with extremely low-quality reads. However, since TB-Profiler internally uses Trimmomatic to trim adapters and low-quality bases, it is not necessary to pre-trim the reads. Therefore, only quality-checked FASTQ files are provided as input to TB-Profiler, allowing it to handle trimming and variant calling internally.
 
 <details>
 <summary>🧬 TB-Profiler: Variant Calling, Lineage, and Drug Resistance</summary>
@@ -986,13 +1058,12 @@ echo "✅ Collated all tbprofiler.txt files into tbprofiler_collated.csv"
 
 </details>
 
-
 # 5️⃣ Snippy
 
 <details>
 <summary>🧬 Detailed Overview: Variant Calling with Snippy</summary>
 
-`Snippy` is a rapid and reproducible pipeline designed for bacterial genome variant calling and consensus sequence generation. It is particularly well-suited for **Mycobacterium tuberculosis (TB) WGS analysis** due to its efficiency and accuracy.
+`Snippy` is a rapid and reproducible pipeline designed for bacterial genome variant calling. It is particularly well-suited for **Mycobacterium tuberculosis (TB) WGS analysis** due to its efficiency and accuracy.
 
 ### Key Features
 - **Reference-based mapping**: Maps raw sequencing reads directly to a reference genome (commonly *M. tuberculosis* H37Rv), ensuring accurate alignment even in repetitive regions.  
@@ -1137,8 +1208,6 @@ chmod +x run_snippy.sh
 conda activate snippy_env
 ./run_snippy.sh
 ```
-
-
 Check Snippy VCFs Before Variant Filtering
 - `tb_variant_filter` relies on a correctly formatted VCF with the `#CHROM` line to parse variants.  
 - VCFs missing this line will **fail** during filtering, causing errors like:  
@@ -1811,7 +1880,7 @@ echo "✅ Consensus genome lengths saved to $OUTPUT_CSV"
 
 # 1️⃣2️⃣ Multiple Sequence Alignment with MAFFT
 
-MAFFT v7.490 requires **a single FASTA file** as input.  
+MAFFT requires **a single FASTA file** as input.  
 It **cannot take multiple FASTA files** on the command line directly, otherwise it interprets filenames as options.
 
 ---
