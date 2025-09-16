@@ -362,52 +362,6 @@ echo "✅ Read length summary saved to $OUTPUT_CSV"
 
 </details>
 
-If it is for **single read** we have replaced the following code instead of step 2
-```bash
-#!/bin/bash
-set -euo pipefail
-
-FASTQ_DIR="raw_data"
-OUTDIR="csv_output"
-OUTPUT_CSV="${OUTDIR}/read_length_summary_single.csv"
-
-mkdir -p "$OUTDIR"
-
-echo "Sample,Min,Max,Avg" > "$OUTPUT_CSV"
-
-calc_stats() {
-    zcat "$1" | awk 'NR%4==2 {len=length($0); sum+=len; if(min==""){min=len}; if(len<min){min=len}; if(len>max){max=len}; count++} END{avg=sum/count; printf "%d,%d,%.2f", min, max, avg}'
-}
-
-for FASTQ in "$FASTQ_DIR"/*.fastq.gz; do
-    [[ -f "$FASTQ" ]] || continue
-    SAMPLE=$(basename "$FASTQ" .fastq.gz)
-    STATS=$(calc_stats "$FASTQ")
-    echo "$SAMPLE,$STATS" >> "$OUTPUT_CSV"
-    echo "✅ $SAMPLE processed"
-done
-
-echo "🎉 Read length summary saved to $OUTPUT_CSV"
-
-```
-<details>
-<summary>📊 Read Length Summary Script Explanation (Single-End)</summary>
-
-- `FASTQ_DIR="raw_data"` → Directory containing input FASTQ files.  
-- `OUTDIR="csv_output"` → Directory where CSV results will be stored.  
-- `OUTPUT_CSV="${OUTDIR}/read_length_summary_single.csv"` → Path of the output CSV file.  
-- `mkdir -p "$OUTDIR"` → Creates the output directory if it does not exist.  
-- `echo "Sample,Min,Max,Avg" > "$OUTPUT_CSV"` → Writes the CSV header.  
-- `calc_stats() { ... }` → Function to compute minimum, maximum, and average read length from a FASTQ file.  
-- `for FASTQ in "$FASTQ_DIR"/*.fastq.gz; do ... done` → Iterates through all FASTQ files in the directory.  
-- `[[ -f "$FASTQ" ]] || continue` → Skips the loop if no FASTQ files are found.  
-- `SAMPLE=$(basename "$FASTQ" .fastq.gz)` → Extracts the sample name by removing `.fastq.gz`.  
-- `STATS=$(calc_stats "$FASTQ")` → Runs the read length calculation on the FASTQ file.  
-- `echo "$SAMPLE,$STATS" >> "$OUTPUT_CSV"` → Appends results to the CSV file.  
-- `echo "✅ $SAMPLE processed"` → Prints progress message for each sample.  
-- `echo "🎉 Read length summary saved to $OUTPUT_CSV"` → Prints final confirmation when done.  
-
-</details>
 
 ##### Step 3: Save and exit nano
 Press Ctrl + O → Enter (to write the file)
@@ -560,60 +514,7 @@ echo "🎉 Completed fastp for $(ls "$OUTDIR"/*_fastp.json | wc -l) samples."
 
 </details>
 
-If it is for **single read** we have replaced the following code instead of step 2
 
-```bash
-#!/bin/bash
-set -euo pipefail
-
-INDIR="raw_data"
-OUTDIR="fastp_results_min_50"
-mkdir -p "$OUTDIR"
-
-SAMPLES=()
-
-for FASTQ in "$INDIR"/*.fastq.gz; do
-    [[ -f "$FASTQ" ]] || continue
-    SAMPLE=$(basename "$FASTQ" .fastq.gz)
-    if [[ -f "$OUTDIR/${SAMPLE}.trim.fastq.gz" ]]; then
-        echo "⏩ Skipping $SAMPLE (already processed)."
-        continue
-    fi
-    SAMPLES+=("$SAMPLE,$FASTQ")
-done
-
-if [[ ${#SAMPLES[@]} -eq 0 ]]; then
-    echo "❌ No FASTQ files found in $INDIR"
-    exit 1
-fi
-
-THREADS=$(nproc)
-FASTP_THREADS=$(( THREADS / 2 ))
-
-run_fastp() {
-    SAMPLE=$1
-    FASTQ=$2
-    echo "✅ Processing sample: $SAMPLE"
-    fastp \
-        -i "$FASTQ" \
-        -o "$OUTDIR/${SAMPLE}.trim.fastq.gz" \
-        -h "$OUTDIR/${SAMPLE}_fastp.html" \
-        -j "$OUTDIR/${SAMPLE}_fastp.json" \
-        --length_required 50 \
-        --qualified_quality_phred 20 \
-        --thread $FASTP_THREADS \
-        &> "$OUTDIR/${SAMPLE}_fastp.log"
-}
-
-export -f run_fastp
-export OUTDIR FASTP_THREADS
-
-printf "%s\n" "${SAMPLES[@]}" | parallel -j 3 --colsep ',' run_fastp {1} {2}
-
-echo "🎉 Completed fastp for $(ls "$OUTDIR"/*_fastp.json | wc -l) samples."
-
-
-```
 ##### Step 3: Save & exit nano
 Press CTRL+O, Enter (save)
 Press CTRL+X (exit)
@@ -759,50 +660,6 @@ echo "🎉 All done! Read counts saved to '$OUTFILE'"
 
 </details>
 
-for single-end trimmed reads:
-```bash
-#!/bin/bash
-set -euo pipefail
-
-INDIR="fastp_results_min_50"
-OUTDIR="csv_output"
-mkdir -p "$OUTDIR"
-
-OUTFILE="$OUTDIR/trimmed_read_counts_single.csv"
-echo "Sample,Reads" > "$OUTFILE"
-echo "📊 Counting reads in trimmed single-end FASTQ files from '$INDIR'..."
-
-for FASTQ in "$INDIR"/*.trim.fastq.gz; do
-    [[ -f "$FASTQ" ]] || continue
-    SAMPLE=$(basename "$FASTQ" .trim.fastq.gz)
-    READ_COUNT=$(( $(zcat "$FASTQ" | wc -l) / 4 ))
-    echo "$SAMPLE,$READ_COUNT" >> "$OUTFILE"
-    echo "✅ $SAMPLE → $READ_COUNT reads"
-done
-
-echo "🎉 All done! Read counts saved to '$OUTFILE'"
-
-```
-<details>
-  <summary>📊 Single-End Trimmed FASTQ Read Count Script Explanation</summary>
-
-- `#!/bin/bash` → Runs the script using Bash.  
-- `set -euo pipefail` → Exits on errors, unset variables, or failed commands.  
-- `INDIR="fastp_results_min_50"` → Directory containing the trimmed FASTQ files.  
-- `OUTDIR="csv_output"` → Directory to save the output CSV file.  
-- `mkdir -p "$OUTDIR"` → Creates the output directory if it doesn’t exist.  
-- `OUTFILE="$OUTDIR/trimmed_read_counts.csv"` → Path of the output CSV file.  
-- `echo "Sample,R1_reads,R2_reads" > "$OUTFILE"` → Writes the CSV header.  
-- `echo "📊 Counting reads in trimmed FASTQ files from '$INDIR'..."` → Prints starting message.  
-- `for R1 in "$INDIR"/*.trimmed.fastq.gz; do ... done` → Iterates over all single-end trimmed FASTQ files.  
-- `[[ -f "$R1" ]] || continue` → Skips if the file does not exist.  
-- `SAMPLE=$(basename "$R1" | sed -E 's/\.trimmed\.fastq\.gz//')` → Extracts the sample name from the filename.  
-- `R1_COUNT=$(( $(zcat "$R1" | wc -l) / 4 ))` → Counts the number of reads in the FASTQ file (4 lines per read).  
-- `echo "$SAMPLE,$R1_COUNT,NA" >> "$OUTFILE"` → Appends the sample name and read count to the CSV file; R2 is set to `NA`.  
-- `echo "✅ $SAMPLE → R1: $R1_COUNT | R2: NA"` → Prints per-sample progress.  
-- `echo "🎉 All done! Read counts saved to '$OUTFILE'"` → Prints final completion message.  
-
-</details>
 
 ##### Step 3: Save and exit nano
 Press Ctrl + O → Enter (to write the file)
@@ -900,31 +757,6 @@ echo "✅ Trimmed read length summary saved to $OUTPUT_CSV"
 - `echo "✅ Trimmed read length summary saved to $OUTPUT_CSV"` → Final confirmation message.  
 
 </details>
-
-If it is for **single read** we have replaced the following code instead of step 2
-```bash
-#!/bin/bash
-set -euo pipefail
-
-INDIR="fastp_results_min_50"
-OUTDIR="csv_output"
-OUTPUT_CSV="${OUTDIR}/trimmed_read_length_summary_single.csv"
-
-mkdir -p "$OUTDIR"
-echo "Sample,Reads" > "$OUTPUT_CSV"
-echo "📊 Counting reads in trimmed single-end FASTQ files from '$INDIR'..."
-
-for FASTQ in "$INDIR"/*.trim.fastq.gz; do
-    [[ -f "$FASTQ" ]] || continue
-    SAMPLE=$(basename "$FASTQ" .trim.fastq.gz)
-    READ_COUNT=$(( $(zcat "$FASTQ" | wc -l) / 4 ))
-    echo "$SAMPLE,$READ_COUNT" >> "$OUTPUT_CSV"
-    echo "✅ $SAMPLE → $READ_COUNT reads"
-done
-
-echo "🎉 All done! Read counts saved to '$OUTPUT_CSV'"
-
-```
 
 ##### Step 3: Save and exit nano
 Press Ctrl + O → Enter
@@ -1085,33 +917,6 @@ echo "📌 All samples processed!"
 - `echo "📌 All samples processed!"` → Final message after all samples are run.
 
 </details>
-
-If it is for **single read** we have replaced the following code instead of step 2
-```bash
-#!/bin/bash
-set -euo pipefail
-
-FASTQ_DIR="raw_data"
-
-echo "📊 Starting TBProfiler runs for all samples in $FASTQ_DIR ..."
-
-for R1 in "$FASTQ_DIR"/*.fastq.gz; do
-    SAMPLE=$(basename "$R1" | sed -E 's/_1\.fastq\.gz$//; s/\.fastq\.gz$//')
-    R2="$FASTQ_DIR/${SAMPLE}_2.fastq.gz"
-
-    if [[ -f "$R2" ]]; then
-        echo "▶️ Processing paired sample: $SAMPLE"
-        tb-profiler profile -1 "$R1" -2 "$R2" --threads 8
-    else
-        echo "▶️ Processing single-end sample: $SAMPLE"
-        tb-profiler profile -1 "$R1" --threads 8
-    fi
-
-    echo "✅ Finished $SAMPLE"
-done
-
-echo "📌 All samples processed!"
-```
 
 
 ##### Step 3: Save and exit nano
@@ -1318,64 +1123,7 @@ echo "Snippy results are in: ${OUTDIR}/"
 
 </details>
 
-If it is for **single read** we have replaced the following code instead of step 2
-```bash
-#!/bin/bash
-set -euo pipefail
 
-REF="H37Rv.fasta"
-FASTP_DIR="fastp_results_min_50"
-OUTDIR="snippy_results"
-THREADS=8
-BWA_THREADS=30
-JOBS=4
-
-mkdir -p "$OUTDIR"
-
-run_snippy_sample() {
-    SAMPLE="$1"
-    FASTQ="$FASTP_DIR/${SAMPLE}.trim.fastq.gz"
-
-    if [[ ! -f "$FASTQ" ]]; then
-        echo "⚠ Missing FASTQ for $SAMPLE"
-        return
-    fi
-
-    TMP_DIR="${OUTDIR}/${SAMPLE}_tmp"
-    mkdir -p "$TMP_DIR"
-
-    snippy --cpus "$THREADS" --outdir "$TMP_DIR" --ref "$REF" \
-           --se "$FASTQ" --force --bwaopt "-T $BWA_THREADS"
-
-    [[ -f "$TMP_DIR/snps.vcf" ]] && mv "$TMP_DIR/snps.vcf" "${OUTDIR}/${SAMPLE}.vcf"
-
-    for f in "$TMP_DIR"/*; do
-        case $(basename "$f") in
-            *.consensus.fa) mv "$f" "${OUTDIR}/${SAMPLE}.consensus.fa" ;;
-            *.bam) mv "$f" "${OUTDIR}/${SAMPLE}.bam" ;;
-            *.bam.bai) mv "$f" "${OUTDIR}/${SAMPLE}.bam.bai" ;;
-            *.tab) mv "$f" "${OUTDIR}/${SAMPLE}.snps.tab" ;;
-        esac
-    done
-
-    rm -rf "$TMP_DIR"
-
-    if [[ -f "${OUTDIR}/${SAMPLE}.vcf" ]]; then
-        echo "✅ Full VCF generated for $SAMPLE"
-    else
-        echo "⚠ No VCF produced for $SAMPLE"
-    fi
-}
-
-export -f run_snippy_sample
-export REF FASTP_DIR OUTDIR THREADS BWA_THREADS
-
-ls "$FASTP_DIR"/*.trim.fastq.gz \
-    | sed 's|.*/||; s/\.trim\.fastq\.gz//' \
-    | sort -u \
-    | parallel -j "$JOBS" run_snippy_sample {}
-
-```
 ##### Step 3: Save and exit nano
 Press Ctrl + O, then Enter (save)
 Press Ctrl + X (exit)
@@ -1600,7 +1348,6 @@ When multiple filters are applied, they **stack**: a variant will be masked if *
 
 </details>
 
-  
 ---
 ## Steps
 
@@ -1700,8 +1447,6 @@ echo "✅ All VCFs filtered using $REGION_FILTER and saved in $OUTDIR"
 
 </details>
 
-
-
 ##### Step 6: Save and exit nano
 Press Ctrl + O → Enter (to write the file)
 Press Ctrl + X → Exit nano
@@ -1777,8 +1522,6 @@ For each sample:
 
 </details>
 
-
-
 ##### Step 1: Open a new file in nano
 ```bash
 nano compare_vcf_qc.sh
@@ -1849,12 +1592,10 @@ for vcf in "$SNIPPY_DIR"/*.vcf; do
     echo "$sample,$unfiltered_total,$unfiltered_pass,$filtered_total,$filtered_pass,$ratio" | tee -a "$OUTFILE"
 done
 
-
 ```
 
 ##### Step  3: Save and exit nano
-
-  Press Ctrl+O → Enter to save.
+   Press Ctrl+O → Enter to save.
    Press Ctrl+X → Exit nano.
 ##### Step  4:Make the script executable
 ```bash
@@ -1948,7 +1689,6 @@ done
 
 </details>
 
-
 ##### Step 4: Save and exit nano
 Press Ctrl + O → Enter (to write the file)
 Press Ctrl + X → Exit nano
@@ -1962,7 +1702,6 @@ chmod +x generate_consensus_all.sh
 conda activate tb_consensus_env
 ./generate_consensus_all.sh
 ```
-
 # 1️⃣1️⃣ Check Consensus FASTA Lengths
 
 After generating consensus sequences, it's important to **verify the genome length** for each sample.  
@@ -2070,8 +1809,6 @@ echo "✅ Consensus genome lengths saved to $OUTPUT_CSV"
 
 </details>
 
-
-
 # 1️⃣2️⃣ Multiple Sequence Alignment with MAFFT
 
 MAFFT v7.490 requires **a single FASTA file** as input.  
@@ -2095,8 +1832,6 @@ You can explicitly pick faster modes:
 Since Mycobacterium tuberculosis genomes are highly conserved and we care more about speed than very small accuracy gains, we can safely drop the expensive iterative refinement steps in MAFFT.
 fast and TB-suitable command
 
-
-
 ##### Step 1: Merge all consensus FASTAs
 We combine all individual consensus sequences into one multi-FASTA file:
 - **Aligning sequences**  
@@ -2119,8 +1854,6 @@ cat consensus_sequences/*.fasta > consensus_sequences/all_consensus.fasta
 mkdir -p mafft_results
 mafft --auto --parttree consensus_sequences/all_consensus.fasta > mafft_results/aligned_consensus.fasta
 ```
-
-
 ##### Step 3: Verify the alignment
 
 A. Quickly inspect the top of the aligned FASTA:
@@ -2335,7 +2068,6 @@ iqtree2 -s mafft_results/aligned_consensus.fasta \
 - `-pre iqtree_results/aligned_consensus` → sets the output file prefix and saves all IQ-TREE results in `iqtree_results/` with this prefix.  
 
 </details>
-
 
 # 📖 References
 
