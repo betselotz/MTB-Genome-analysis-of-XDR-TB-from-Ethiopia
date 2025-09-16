@@ -47,6 +47,7 @@ This workflow performs **high-confidence genomic analysis** of **extensively dru
 ---
 
 ## 🛠 Tool Installation (Separate Conda Environments)
+We use separate Conda environments for each tool to ensure reproducibility, avoid software conflicts, and simplify maintenance. Different tools may require different versions of Python or libraries, and installing them together can cause one tool to break when another requires a different version. By isolating each tool in its own environment, we can safely update or reinstall software without affecting the rest of the pipeline, keep the base system clean, and allow other researchers to reproduce the exact setup by exporting and sharing environment files. This approach ensures a robust, conflict-free, and easily maintainable MTB WGS workflow.
 
 ### Prerequisites
 ```bash
