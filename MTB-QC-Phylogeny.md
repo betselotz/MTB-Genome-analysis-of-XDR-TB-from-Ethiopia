@@ -46,21 +46,15 @@ This workflow performs **high-confidence genomic analysis** of **extensively dru
 
 ---
 
-✨ **Why it matters:**  
-This workflow ensures **robust, high-quality variant calls and evolutionary insights**, helping to track XDR-TB transmission and inform public health strategies in Ethiopia.
 
 # 1️⃣ Explore Raw FASTQ Files
 
 ### FASTQ summary
 
-This repository contains scripts and commands to **explore and summarize paired-end FASTQ files** for multiple samples, as well as individual single samples, in a bioinformatically meaningful way.
+Paired-end FASTQ files are first inspected using simple command-line tools.
 
-> ⚠️ Note: We do **not** need to run these scripts for single-end sequence datasets.
-
-</details>
-
-  
 ### 1. Peek at the first few reads
+Before analyzing sequencing data, it’s useful to inspect the first few reads in each FASTQ file. This allows a quick check of file format, sequence identifiers, and the general structure of paired-end reads:
 ```bash
 zcat raw_data/SRR28821350_1.fastq.gz | head -n 16
 zcat raw_data/SRR28821350_2.fastq.gz | head -n 16
@@ -72,8 +66,6 @@ zcat raw_data/SRR28821350_2.fastq.gz | head -n 16
 - Unlike `gunzip`, it **prints the uncompressed data to standard output** instead of creating a new file.  
 - Example workflow:  
   - `zcat raw_data/SRR28821350_1.fastq.gz | head -n 16` →  Show the first 16 lines of R1 (forward) FASTQ file of a compressed file without extracting it. 
-
-
 - Each read in FASTQ format consists of 4 lines:  
   1. Header line (`@`) with read ID  
   2. Sequence line  
@@ -87,6 +79,7 @@ zcat raw_data/SRR28821350_2.fastq.gz | head -n 16
 
 
 ### 2. Count total reads
+To determine the total number of reads in each FASTQ file, divide the total number of lines by 4, since each read consists of four lines (identifier, sequence, optional identifier, and quality scores). This ensures paired-end files are consistent and provides an initial check on sequencing depth:
 For single sample
 ```bash
 echo $(( $(zcat raw_data/SRR28821350_1.fastq.gz | wc -l) / 4 ))
@@ -168,12 +161,7 @@ echo "🎉 All done! Read counts saved to '$OUTFILE'"
 </details>unsaved
 
 ### 3. Base composition
-
-- **Assess sequencing quality** → Balanced A, T, G, C indicates good data.  
-- **Detect contamination or bias** → Overrepresented bases may signal adapters, low-complexity regions, or contaminants.  
-- **Guide quality control** → Helps decide if serious trimming or filtering is needed before analysis.  
-- **Prevent downstream errors** → Ensures accurate mapping, variant calling, or assembly.  
-✅ **Base composition check is a quick QC step that safeguards analysis quality.**
+Checking the nucleotide composition of each FASTQ file helps assess sequencing quality. Balanced proportions of A, T, G, and C indicate high-quality data with minimal bias. This script counts the occurrence of each base in both paired-end files:
 
 ```bash
 #!/bin/bash
@@ -203,8 +191,7 @@ done
 
 
 ### 4. Quality score summary
-its good practice to quickly inspect base quality scores for the first few reads before full QC or analysis
-- We may spot unusual patterns in base quality that may indicate issues with the sequencing run.
+FASTQ files encode base quality scores on the 4th line of every read. Checking these scores provides an initial assessment of sequencing quality before trimming or downstream analysis:
 First 10 quality lines
 ```bash
 zcat raw_data/SRR28821350_1.fastq.gz | sed -n '4~4p' | head -n 10
@@ -222,7 +209,7 @@ zcat raw_data/SRR28821350_2.fastq.gz | sed -n '4~4p' | head -n 10
   - Same as above, but for R2 FASTQ.  
 </details>
 
- Count ASCII characters in quality lines
+FASTQ quality scores are encoded as ASCII characters. Counting the occurrence of each character provides a quantitative overview of base quality across the reads:
 ```bash
 zcat raw_data/SRR28821350_1.fastq.gz | sed -n '4~4p' | awk '{for(i=1;i<=length($0);i++){q[substr($0,i,1)]++}} END{for (k in q) print k,q[k]}'
 zcat raw_data/SRR28821350_2.fastq.gz | sed -n '4~4p' | awk '{for(i=1;i<=length($0);i++){q[substr($0,i,1)]++}} END{for (k in q) print k,q[k]}'
@@ -243,7 +230,6 @@ zcat raw_data/SRR28821350_2.fastq.gz | sed -n '4~4p' | awk '{for(i=1;i<=length($
 ### 5.   Checking FASTQ Pairing 
 
 We ensured all our FASTQ files are correctly paired before running any bioinformatics analysis.
-
 
 ##### Step 1: Create the script
 ```bash
@@ -303,7 +289,6 @@ $MISSING && echo "⚠ Some samples are missing pairs. Fix before running fastp."
 
 </details>
 
-
 ##### Step 4: Make the script executable
 ```bash
 chmod +x check_fastq_pairs.sh
@@ -314,7 +299,6 @@ chmod +x check_fastq_pairs.sh
 ```
 > **Tip:** Ensure all R1/R2 naming conventions in your directory match the patterns used in the script.  
 > You can adjust the patterns (`*_1.fastq.gz`, `*_R1.fastq.gz`, etc.) if needed.
-
 
 Calculating Minimum, Maximum, and Average Read Lengths for Paired-End Reads
 
@@ -411,7 +395,6 @@ echo "✅ Read length summary saved to $OUTPUT_CSV"
 - `echo "✅ Read length summary saved to $OUTPUT_CSV"` → Final confirmation message.
 
 </details>
-
 
 ##### Step 3: Save and exit nano
 Press Ctrl + O → Enter (to write the file)
