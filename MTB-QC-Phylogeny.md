@@ -1,69 +1,53 @@
 
-🧪 Methodology: MTB Genome Analysis of XDR-TB from Ethiopia
+## 🧪 Methodology: MTB Genome Analysis of XDR-TB from Ethiopia
 
-This workflow performs high-confidence genomic analysis of extensively drug-resistant Mycobacterium tuberculosis (XDR-TB) strains from Ethiopia, combining raw data QC, variant calling, and phylogenetic inference.
+This workflow performs **high-confidence genomic analysis** of **extensively drug-resistant Mycobacterium tuberculosis (XDR-TB)** strains from Ethiopia, combining raw data QC, variant calling, and phylogenetic inference.  
 
-1️⃣ Explore Raw FASTQ Files
+### 1️⃣ Explore Raw FASTQ Files
+- Inspect **paired-end reads**: count, read length distribution, and base composition (A/T/G/C).  
+- Balanced bases ✅ → good-quality sequencing data.
 
-Inspect paired-end reads: count, read length distribution, and base composition (A/T/G/C).
+### 2️⃣ Quality Control & Trimming with **FASTP**
+- Remove adapters, trim low-quality bases, and filter short reads.  
+- Evaluate **pre- vs post-trimming metrics** to measure effectiveness.  
+- Generate **per-sample HTML & JSON QC reports**.
 
-Balanced bases ✅ → good-quality sequencing data.
+### 3️⃣ Aggregate QC Reports with **MultiQC**
+- Combine all FASTQ and FASTP QC reports into a **single interactive HTML report**.  
+- Quickly identify samples with potential issues.
 
-2️⃣ Quality Control & Trimming with FASTP
+### 4️⃣ Drug Resistance Screening with **TB-Profiler**
+- Check **raw FASTQ quality** and remove extremely low-quality samples.  
+- Generate initial **drug-resistance predictions** per isolate.
 
-Remove adapters, trim low-quality bases, and filter short reads.
+### 5️⃣ Variant Calling with **Snippy**
+- Align reads to **H37Rv reference genome**.  
+- Produce **BAM files** and preliminary **VCFs**.
 
-Evaluate pre- vs post-trimming metrics to measure effectiveness.
+### 6️⃣ BAM Quality Check with **Qualimap**
+- Assess **coverage, mapping quality, and read distribution** of BAM files.  
+- Aggregate all **Qualimap QC reports** into a **single summary** to easily review per-sample metrics.  
+- Ensure reliability for downstream variant filtering.
 
-Generate per-sample HTML & JSON QC reports.
+### 7️⃣ High-Confidence Variant Filtering with **tb_variant_filter**
+- Mask **Refined Low Confidence (RLC) regions**.  
+- Retain **only high-confidence variants** for accurate analysis.
 
-3️⃣ Aggregate QC Reports with MultiQC
+### 8️⃣ Consensus Genome Generation & Outgroup Inclusion
+- Create **per-sample FASTA sequences** representing the **full genome** including high-confidence variants.  
+- Include **SRR10828835 as an outgroup** to root the phylogenetic tree and provide directionality for evolutionary analysis.
 
-Combine all FASTQ and FASTP QC reports into a single interactive HTML report.
+### 9️⃣ Multiple Sequence Alignment
+- Align all consensus sequences using **MAFFT** for consistent comparison.  
 
-Quickly identify samples with potential issues.
+### 🔟 Phylogenetic Tree Construction with **IQ-TREE**
+- Build **maximum-likelihood trees** with **ultrafast bootstrap (1000 replicates)**.  
+- Visualize with **TB-Profiler ITOL outputs** to include resistance and metadata.
 
-4️⃣ Drug Resistance Screening with TB-Profiler
+---
 
-Check raw FASTQ quality and remove extremely low-quality samples.
-
-Generate initial drug-resistance predictions per isolate.
-
-5️⃣ Variant Calling with Snippy
-
-Align reads to H37Rv reference genome.
-
-Produce BAM files and preliminary VCFs.
-
-6️⃣ BAM Quality Check with Qualimap
-
-Assess coverage, mapping quality, and read distribution of BAM files.
-
-Aggregate all Qualimap QC reports into a single summary to easily review per-sample metrics.
-
-Ensure reliability for downstream variant filtering.
-
-7️⃣ High-Confidence Variant Filtering with tb_variant_filter
-
-Mask Refined Low Confidence (RLC) regions.
-
-Retain only high-confidence variants for accurate analysis.
-
-8️⃣ Consensus Genome Generation & Outgroup Inclusion
-
-Create per-sample FASTA sequences representing the full genome including high-confidence variants.
-
-Include SRR10828835 as an outgroup to root the phylogenetic tree and provide directionality for evolutionary analysis.
-
-9️⃣ Multiple Sequence Alignment
-
-Align all consensus sequences using MAFFT for consistent comparison.
-
-🔟 Phylogenetic Tree Construction with IQ-TREE
-
-Build maximum-likelihood trees with ultrafast bootstrap (1000 replicates).
-
-Visualize with TB-Profiler ITOL outputs to include resistance and metadata.
+✨ **Why it matters:**  
+This workflow ensures **robust, high-quality variant calls and evolutionary insights**, helping to track XDR-TB transmission and inform public health strategies in Ethiopia.
 
 # 1️⃣  Checking FASTQ
 
