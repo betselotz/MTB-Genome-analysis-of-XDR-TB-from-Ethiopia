@@ -33,11 +33,11 @@ This workflow performs **high-confidence genomic analysis** of **extensively dru
 - Mask **Refined Low Confidence (RLC) regions**.  
 - Retain **only high-confidence variants** for accurate analysis.
 
-### 8️⃣ Consensus Genome Generation & Outgroup Inclusion
-- Create **per-sample FASTA sequences** representing the **full genome** including high-confidence variants.  
+### 8️⃣ Consensus Genome Generation with **BCFtools** & Outgroup Inclusion
+- Generate **per-sample consensus FASTA sequences** using **BCFtools**, incorporating only high-confidence variants.  
 - Include **SRR10828835 as an outgroup** to root the phylogenetic tree and provide directionality for evolutionary analysis.
 
-### 9️⃣ Multiple Sequence Alignment
+### 9️⃣ Multiple Sequence Alignment using **MAFFT** 
 - Align all consensus sequences using **MAFFT** for consistent comparison.  
 
 ### 🔟 Phylogenetic Tree Construction with **IQ-TREE**
@@ -49,7 +49,7 @@ This workflow performs **high-confidence genomic analysis** of **extensively dru
 ✨ **Why it matters:**  
 This workflow ensures **robust, high-quality variant calls and evolutionary insights**, helping to track XDR-TB transmission and inform public health strategies in Ethiopia.
 
-# 1️⃣  Checking FASTQ
+# 1️⃣ Explore Raw FASTQ Files
 
 ### FASTQ summary
 
@@ -425,7 +425,7 @@ chmod +x fastq_read_length_summary.sh
 ./fastq_read_length_summary.sh
 ```
 
-# 3️⃣ FASTP – Quality Control and Trimming
+# 2️⃣ Quality Control & Trimming with **FASTP**
 
 <details>
 <summary>⚡ FASTQ Preprocessing with fastp</summary>
@@ -817,7 +817,7 @@ chmod +x trimmed_fastq_read_length_summary.sh
 ```bash
 ./trimmed_fastq_read_length_summary.sh
 ```
-# 4️⃣ MultiQC
+# 3️⃣ Aggregate QC Reports with **MultiQC**
 
 <details>
 <summary>📊 Aggregating QC with MultiQC</summary>
@@ -884,7 +884,7 @@ chmod +x run_multiqc.sh
 conda activate multiqc_env
 ./run_multiqc.sh
 ```
-# 9️⃣ TB-Profiler
+# 4️⃣ Drug Resistance Screening with **TB-Profiler**
 Before running TB-Profiler, we perform quality checks on raw FASTQ files and exclude samples with extremely low-quality reads. However, since TB-Profiler internally uses Trimmomatic to trim adapters and low-quality bases, it is not necessary to pre-trim the reads. Therefore, only quality-checked FASTQ files are provided as input to TB-Profiler, allowing it to handle trimming and variant calling internally.
 
 <details>
@@ -1033,7 +1033,7 @@ echo "✅ Collated all tbprofiler.txt files into tbprofiler_collated.csv"
 
 </details>
 
-# 5️⃣ Snippy
+# 5️⃣ Variant Calling with **Snippy**
 
 <details>
 <summary>🧬 Detailed Overview: Variant Calling with Snippy</summary>
@@ -1206,7 +1206,7 @@ for vcf in "$OUTDIR"/*.vcf; do
 done
 ```
 
-# 6️⃣ Qualimap BAM QC
+# 6️⃣ BAM Quality Check with **Qualimap**
 <details>
 <summary>📈 BAM Quality Assessment with Qualimap</summary>
 
@@ -1283,7 +1283,7 @@ conda activate qualimap_env
 ./run_qualimap.sh
 ```
 
-# 7️⃣ MultiQC after Qualimap
+### Run MultiQC on Qualimap outputs
 
 <details>
 <summary>📊 Aggregating BAM QC with MultiQC</summary>
@@ -1299,8 +1299,6 @@ After running **Qualimap BAM QC**, each sample produces individual HTML and PDF 
 </details>
 
 ---
-
-### Run MultiQC on Qualimap outputs
 
 ##### Step 1: **Open nano to create the script `run_multiqc_qualimap.sh`
 ```bash
@@ -1340,7 +1338,6 @@ echo "MultiQC report generated in '$OUTPUT_DIR'."
 
 </details>
 
-
 ##### Step 3: Save & exit nano
 Press CTRL+O, Enter (save)
 Press CTRL+X (exit)
@@ -1354,7 +1351,7 @@ conda activate multiqc_env
 ./run_multiqc_qualimap.sh
 ```
 
-# 8️⃣ TB Variant Filter
+# 7️⃣ High-Confidence Variant Filtering with **tb_variant_filter**
 <details>
 <summary>🧬 TB-Specific Variant Filtering with <code>tb_variant_filter</code></summary>
 
@@ -1650,7 +1647,7 @@ chmod +x compare_vcf_qc.sh
 ./compare_vcf_qc.sh
 ```
 
-# 1️⃣0️⃣ BCFTools Consensus Generation
+# 8️⃣ Consensus Genome Generation with **BCFtools** & Outgroup Inclusion
 
 <details>
 <summary>🧬 Generate Sample-Specific Consensus Sequences</summary>
@@ -1746,7 +1743,7 @@ chmod +x generate_consensus_all.sh
 conda activate tb_consensus_env
 ./generate_consensus_all.sh
 ```
-# 1️⃣1️⃣ Check Consensus FASTA Lengths
+Check Consensus FASTA Lengths
 
 After generating consensus sequences, it's important to **verify the genome length** for each sample.  
 This ensures no sequences are truncated or incomplete due to missing coverage or filtering.
@@ -1853,7 +1850,7 @@ echo "✅ Consensus genome lengths saved to $OUTPUT_CSV"
 
 </details>
 
-# 1️⃣2️⃣ Multiple Sequence Alignment with MAFFT
+# 9️⃣ Multiple Sequence Alignment
 
 MAFFT requires **a single FASTA file** as input.  
 It **cannot take multiple FASTA files** on the command line directly, otherwise it interprets filenames as options.
@@ -2040,7 +2037,7 @@ Advantages:
   Highlight sequences that differ significantly.
 
 
-# 1️⃣3️⃣ IQtree
+# 🔟 Phylogenetic Tree Construction with **IQ-TREE**
 <details>
 <summary>📖 Overview of IQ-TREE and important concepts</summary>
 
