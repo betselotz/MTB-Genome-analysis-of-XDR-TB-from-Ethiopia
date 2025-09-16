@@ -46,6 +46,77 @@ This workflow performs **high-confidence genomic analysis** of **extensively dru
 
 ---
 
+## 🛠 Tool Installation (Separate Conda Environments)
+
+### Prerequisites
+```bash
+conda config --add channels defaults
+conda config --add channels bioconda
+conda config --add channels conda-forge
+```
+
+FASTP
+```bash
+conda create -n fastp_env fastp=0.23.3 -y
+conda activate fastp_env
+fastp --version
+```
+
+MultiQC
+```bash
+conda create -n multiqc_env multiqc=1.16 -y
+conda activate multiqc_env
+multiqc --version
+```
+TB-Profiler
+```bash
+conda create -n tbprofiler_env python=3.9 -y
+conda activate tbprofiler_env
+pip install tb-profiler
+tb-profiler --version
+```
+Snippy
+```bash
+conda create -n snippy_env snippy=4.6.0 -y
+conda activate snippy_env
+snippy --version
+```
+Qualimap
+```bash
+conda create -n qualimap_env qualimap=2.2.2d -y
+conda activate qualimap_env
+qualimap --help
+```
+tb_variant_filter (COMBAT-TB)
+```bash
+conda create -n tb_variant_filter_env python=3.9 -y
+conda activate tb_variant_filter_env
+pip install tb-variant-filter
+tb_variant_filter --help
+```
+BCFtools / SAMtools
+```bash
+conda create -n bcftools_env bcftools=1.17 samtools=1.17 -y
+conda activate bcftools_env
+bcftools --version
+samtools --version
+```
+MAFFT
+```bash
+conda create -n mafft_env mafft=7.505 -y
+conda activate mafft_env
+mafft --version
+```
+IQ-TREE
+```bash
+conda create -n iqtree_env iqtree=2.2.2.3 -y
+conda activate iqtree_env
+iqtree2 --version
+```
+iTOL
+Web-based tool: https://itol.embl.de
+
+
 
 # 1️⃣ Explore Raw FASTQ Files
 
