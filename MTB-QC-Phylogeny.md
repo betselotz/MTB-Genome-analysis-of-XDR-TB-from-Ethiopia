@@ -226,7 +226,6 @@ zcat raw_data/SRR28821350_2.fastq.gz | sed -n '4~4p' | awk '{for(i=1;i<=length($
   - Same as above, but for R2 FASTQ.  
 </details>
 
-
 ### 5.   Checking FASTQ Pairing 
 
 We ensured all our FASTQ files are correctly paired before running any bioinformatics analysis.
@@ -302,7 +301,7 @@ chmod +x check_fastq_pairs.sh
 
 Calculating Minimum, Maximum, and Average Read Lengths for Paired-End Reads
 
-### 5.   Checking raw FASTQ Read Length Summary
+### 6.   Checking raw FASTQ Read Length Summary
 
 <details>
 <summary>📏 Read Length Summary – Importance and Benefits</summary>
