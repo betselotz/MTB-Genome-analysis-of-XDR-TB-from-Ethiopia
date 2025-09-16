@@ -801,6 +801,7 @@ chmod +x trimmed_fastq_read_length_summary.sh
 ```
 # 3️⃣ Aggregate QC Reports with **MultiQC**
 
+[`MultiQC`]([https://github.com/MultiQC/MultiQC]) 
 <details>
 <summary>📊 Aggregating QC with MultiQC</summary>
 
@@ -2094,12 +2095,25 @@ iqtree2 -s mafft_results/aligned_consensus.fasta \
 
 # 📖 References
 
-WHO. Catalogue of mutations in MTBC and their association with drug resistance, 2nd ed, 2023.
+1. WHO. *Catalogue of mutations in MTBC and their association with drug resistance*, 2nd ed, 2023.  
 
-Ngabonziza JCS, et al. A sister lineage of the Mycobacterium tuberculosis complex discovered in Rwanda. Nat Commun, 2020 (Lineage 8).
+2. Chen, S., Zhou, Y., Chen, Y., & Gu, J. (2018). [*fastp: an ultra-fast all-in-one FASTQ preprocessor*](https://doi.org/10.1093/bioinformatics/bty560). **Bioinformatics**, 34(17), i884–i890.  
 
-Coscolla M, et al. Phylogenomics of Mycobacterium africanum lineage 9. Nat Commun, 2021 (Lineage 9).
+3. Ewels, P., Magnusson, M., Lundin, S., & Käller, M. (2016). [*MultiQC: summarize analysis results for multiple tools and samples in a single report*](https://doi.org/10.1093/bioinformatics/btw354). **Bioinformatics**, 32(19), 3047–3048.  
 
-Phelan J, et al. Whole-genome sequencing for TB: current standards and challenges. Nat Rev Microbiol.
+4. Coll, F., McNerney, R., Preston, M. D., Guerra-Assunção, J. A., Warry, A., Hill-Cawthorne, G., … Clark, T. G. (2015). [*Rapid determination of anti-tuberculosis drug resistance from whole-genome sequences*](https://doi.org/10.1186/s13073-015-0164-0). **Genome Medicine**, 7, 51.  
 
-Li H, et al. Fast and accurate short read alignment with Burrows–Wheeler transform. Bioinformatics
+5. Seemann, T. (2015). *Snippy: rapid haploid variant calling and core genome alignment*. Available at: [https://github.com/tseemann/snippy](https://github.com/tseemann/snippy)  
+
+6. Okonechnikov, K., Conesa, A., & García-Alcalde, F. (2016). [*Qualimap 2: advanced multi-sample quality control for high-throughput sequencing data*](https://doi.org/10.1093/bioinformatics/btv566). **Bioinformatics**, 32(2), 292–294.  
+
+7. Walker, T. M., Merker, M., Knoblauch, A. M., Helbling, P., Schoch, O. D., van der Werf, T. S., … Niemann, S. (2022). *A cluster of multidrug-resistant Mycobacterium tuberculosis among patients arriving in Europe from the Horn of Africa: a molecular epidemiological study*. **Lancet Microbe**, 3(9), e672–e681. (Supplementary methods describe tb_variant_filter). Available at: [https://github.com/iqbal-lab-org/tb_variant_filter](https://github.com/iqbal-lab-org/tb_variant_filter)  
+
+8. Danecek, P., Bonfield, J. K., Liddle, J., Marshall, J., Ohan, V., Pollard, M. O., … Li, H. (2021). [*Twelve years of SAMtools and BCFtools*](https://doi.org/10.1093/gigascience/giab008). **GigaScience**, 10(2), giab008.  
+
+9. Katoh, K., & Standley, D. M. (2013). [*MAFFT multiple sequence alignment software version 7: improvements in performance and usability*](https://doi.org/10.1093/molbev/mst010). **Molecular Biology and Evolution**, 30(4), 772–780.  
+
+10. Minh, B. Q., Schmidt, H. A., Chernomor, O., Schrempf, D., Woodhams, M. D., von Haeseler, A., & Lanfear, R. (2020). [*IQ-TREE 2: new models and efficient methods for phylogenetic inference in the genomic era*](https://doi.org/10.1093/molbev/msaa015). **Molecular Biology and Evolution**, 37(5), 1530–1534.  
+
+11. Letunic, I., & Bork, P. (2021). [*Interactive Tree Of Life (iTOL) v5: an online tool for phylogenetic tree display and annotation*](https://doi.org/10.1093/nar/gkab301). **Nucleic Acids Research**, 49(W1), W293–W296.  
+
