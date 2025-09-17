@@ -256,7 +256,7 @@ Checking the nucleotide composition of each FASTQ file helps assess sequencing q
 
 ```bash
 #!/bin/bash
-for fq in raw_data/SRR28821350_1.fastq.gz raw_data/SRR28821350_2.fastq.gz; do
+for fq in raw_data/ETRS-003_1.fastq.gz raw_data/ETRS-003_2.fastq.gz; do
     [ -f "$fq" ] || continue
     echo "Counting bases in $fq..."
     zcat "$fq" | awk 'NR%4==2 { for(i=1;i<=length($0);i++) b[substr($0,i,1)]++ } 
@@ -267,7 +267,7 @@ done
 <details>
 <summary>🧬 Nucleotide Counting Script Explanation</summary>
 
-- `for fq in raw_data/SRR28821350_1.fastq.gz raw_data/SRR28821350_2.fastq.gz; do ... done` → Loops over the two specified FASTQ files (R1 and R2).  
+- `for fq in raw_data/ETRS-003_1.fastq.gz raw_data/ETRS-003_2.fastq.gz; do ... done` → Loops over the two specified FASTQ files (R1 and R2).  
 - `[ -f "$fq" ] || continue` → Skips the iteration if the file does not exist.  
 - `echo "Counting bases in $fq..."` → Prints which file is being processed.  
 - `zcat "$fq"` → Decompresses the FASTQ file and streams its content to standard output.  
@@ -285,13 +285,13 @@ done
 FASTQ files encode base quality scores on the 4th line of every read. Checking these scores provides an initial assessment of sequencing quality before trimming or downstream analysis:
 First 10 quality lines
 ```bash
-zcat raw_data/SRR28821350_1.fastq.gz | sed -n '4~4p' | head -n 10
-zcat raw_data/SRR28821350_2.fastq.gz | sed -n '4~4p' | head -n 10
+zcat raw_data/ETRS-003_1.fastq.gz | sed -n '4~4p' | head -n 10
+zcat raw_data/ETRS-003_2.fastq.gz | sed -n '4~4p' | head -n 10
 ```
 <details>
 <summary>🔍 View FASTQ Quality Scores</summary>
 
-- `zcat raw_data/SRR28821350_1.fastq.gz | sed -n '4~4p' | head -n 10`  
+- `zcat raw_data/ETRS-003_1.fastq.gz | sed -n '4~4p' | head -n 10`  
   - Decompresses R1 FASTQ.  
   - `sed -n '4~4p'` → Prints every 4th line starting from line 4 (the **quality score line** for each read).  
   - `head -n 10` → Shows only the first 10 quality lines for quick inspection.  
@@ -302,18 +302,18 @@ zcat raw_data/SRR28821350_2.fastq.gz | sed -n '4~4p' | head -n 10
 
 FASTQ quality scores are encoded as ASCII characters. Counting the occurrence of each character provides a quantitative overview of base quality across the reads:
 ```bash
-zcat raw_data/SRR28821350_1.fastq.gz | sed -n '4~4p' | awk '{for(i=1;i<=length($0);i++){q[substr($0,i,1)]++}} END{for (k in q) print k,q[k]}'
-zcat raw_data/SRR28821350_2.fastq.gz | sed -n '4~4p' | awk '{for(i=1;i<=length($0);i++){q[substr($0,i,1)]++}} END{for (k in q) print k,q[k]}'
+zcat raw_data/ETRS-003_1.fastq.gz | sed -n '4~4p' | awk '{for(i=1;i<=length($0);i++){q[substr($0,i,1)]++}} END{for (k in q) print k,q[k]}'
+zcat raw_data/ETRS-003_2.fastq.gz | sed -n '4~4p' | awk '{for(i=1;i<=length($0);i++){q[substr($0,i,1)]++}} END{for (k in q) print k,q[k]}'
 ```
 <details>
 <summary>🔢 Count Quality Score Frequencies</summary>
 
-- `zcat raw_data/SRR28821350_1.fastq.gz | sed -n '4~4p' | awk '{for(i=1;i<=length($0);i++){q[substr($0,i,1)]++}} END{for (k in q) print k,q[k]}'`  
+- `zcat raw_data/ETRS-003_1.fastq.gz | sed -n '4~4p' | awk '{for(i=1;i<=length($0);i++){q[substr($0,i,1)]++}} END{for (k in q) print k,q[k]}'`  
   - Decompresses R1 FASTQ.  
   - `sed -n '4~4p'` → Selects every 4th line (the **quality line**).  
   - `awk '{for(i=1;i<=length($0);i++){q[substr($0,i,1)]++}} END{for (k in q) print k,q[k]}'` → Counts occurrences of each quality score character.  
 
-- `zcat raw_data/SRR28821350_2.fastq.gz | sed -n '4~4p' | awk '{for(i=1;i<=length($0);i++){q[substr($0,i,1)]++}} END{for (k in q) print k,q[k]}'`  
+- `zcat raw_data/ETRS-003_2.fastq.gz | sed -n '4~4p' | awk '{for(i=1;i<=length($0);i++){q[substr($0,i,1)]++}} END{for (k in q) print k,q[k]}'`  
   - Same as above, but for R2 FASTQ.  
 </details>
 
