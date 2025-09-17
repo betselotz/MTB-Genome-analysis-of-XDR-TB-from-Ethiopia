@@ -296,7 +296,7 @@ zcat raw_data/ETRS-003_2.fastq.gz | sed -n '4~4p' | head -n 10
   - `sed -n '4~4p'` → Prints every 4th line starting from line 4 (the **quality score line** for each read).  
   - `head -n 10` → Shows only the first 10 quality lines for quick inspection.  
 
-- `zcat raw_data/SRR28821350_2.fastq.gz | sed -n '4~4p' | head -n 10`  
+- `zcat raw_data/ETRS-003_2.fastq.gz | sed -n '4~4p' | head -n 10`  
   - Same as above, but for R2 FASTQ.  
 </details>
 
@@ -418,7 +418,6 @@ By compiling read lengths into a **CSV file**, you can:
 - Improve reliability and reproducibility of downstream analyses.  
 
 </details>
-
 ---
 
 ##### Step 1:  Open nano to create a new script
