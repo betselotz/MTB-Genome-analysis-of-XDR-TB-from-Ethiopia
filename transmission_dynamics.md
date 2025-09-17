@@ -25,11 +25,18 @@ IQ-TREE2 → phylogenetic tree construction
 
 R (optional) → cluster analysis and visualization
 
+
+```bash
+
+```
+
+
+
 Example Conda environment:
 
 ```bash
-conda create -n mtb_snp_env mafft snp-sites snp-dists iqtree r-base -y
-conda activate mtb_snp_env
+conda create -n snp_env -c bioconda -c conda-forge snp-sites snp-dists -y
+conda activate snp_env
 ```
 
 prepare Input
