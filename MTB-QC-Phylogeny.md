@@ -123,13 +123,32 @@ Web-based tool: https://itol.embl.de
 
 ### FASTQ summary
 
+
+Before starting any job we have changed to our working directory
+```bash
+cd /home/betselot/Project_data/TB/NTRL
+```
+We renamed all paired-end sequencing files so that forward reads end with `_1.fastq.gz` and reverse reads end with `_2.fastq.gz`, following the standard naming convention expected by most bioinformatics tools.
+
+```bash
+for f in raw_data/*_R1.fastq.gz; do
+    base=${f%_R1.fastq.gz}
+    mv "$f" "${base}_1.fastq.gz"
+done
+
+for f in raw_data/*_R2.fastq.gz; do
+    base=${f%_R2.fastq.gz}
+    mv "$f" "${base}_2.fastq.gz"
+done
+```
 Paired-end FASTQ files are first inspected using simple command-line tools.
 
 ### 1. Peek at the first few reads
 Before analyzing sequencing data, it’s useful to inspect the first few reads in each FASTQ file. This allows a quick check of file format, sequence identifiers, and the general structure of paired-end reads:
+
 ```bash
-zcat raw_data/SRR28821350_1.fastq.gz | head -n 16
-zcat raw_data/SRR28821350_2.fastq.gz | head -n 16
+zcat raw_data/ETRS-003_1.fastq.gz | head -n 16
+zcat raw_data/ETRS-003_2.fastq.gz | head -n 16
 ```
 <details>
 <summary>🔍 Inspect First Reads of FASTQ Files</summary>
@@ -137,7 +156,7 @@ zcat raw_data/SRR28821350_2.fastq.gz | head -n 16
 - Works primarily with `.gz` files (gzip-compressed).  
 - Unlike `gunzip`, it **prints the uncompressed data to standard output** instead of creating a new file.  
 - Example workflow:  
-  - `zcat raw_data/SRR28821350_1.fastq.gz | head -n 16` →  Show the first 16 lines of R1 (forward) FASTQ file of a compressed file without extracting it. 
+  - `zcat raw_data/ETRS-003_1.fastq.gz | head -n 16` →  Show the first 16 lines of R1 (forward) FASTQ file of a compressed file without extracting it. 
 - Each read in FASTQ format consists of 4 lines:  
   1. Header line (`@`) with read ID  
   2. Sequence line  
@@ -154,8 +173,8 @@ zcat raw_data/SRR28821350_2.fastq.gz | head -n 16
 To determine the total number of reads in each FASTQ file, divide the total number of lines by 4, since each read consists of four lines (identifier, sequence, optional identifier, and quality scores). This ensures paired-end files are consistent and provides an initial check on sequencing depth:
 For single sample
 ```bash
-echo $(( $(zcat raw_data/SRR28821350_1.fastq.gz | wc -l) / 4 ))
-echo $(( $(zcat raw_data/SRR28821350_2.fastq.gz | wc -l) / 4 ))
+echo $(( $(zcat raw_data/ETRS-003_1.fastq.gz | wc -l) / 4 ))
+echo $(( $(zcat raw_data/ETRS-003_2.fastq.gz | wc -l) / 4 ))
 ```
 <details>
 <summary>📊 Counting Reads in FASTQ Files</summary>
