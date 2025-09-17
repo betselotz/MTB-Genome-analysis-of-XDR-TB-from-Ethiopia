@@ -214,15 +214,18 @@ OUTFILE="$OUTDIR/fastq_read_counts.csv"
 echo "Sample,R1_reads,R2_reads" > "$OUTFILE"
 echo "📊 Counting reads in FASTQ files from '$INDIR'..."
 
-for R1 in "$INDIR"/*_1.fastq.gz "$INDIR"/*_R1.fastq.gz; do
+for R1 in "$INDIR"/*_1.fastq.gz; do
     [[ -f "$R1" ]] || continue
-    SAMPLE=$(basename "$R1" | sed -E 's/_R?1.*\.fastq\.gz//')
-    R2=""
-    for suffix in "_2.fastq.gz" "_R2.fastq.gz" "_R2_*.fastq.gz"; do
-        [[ -f "$INDIR/${SAMPLE}${suffix}" ]] && R2="$INDIR/${SAMPLE}${suffix}" && break
-    done
+    SAMPLE=$(basename "$R1" | sed -E 's/_1\.fastq\.gz//')
+    R2="$INDIR/${SAMPLE}_2.fastq.gz"
+
     R1_COUNT=$(( $(zcat "$R1" | wc -l) / 4 ))
-    R2_COUNT=$([[ -n "$R2" ]] && echo $(( $(zcat "$R2" | wc -l) / 4 )) || echo "NA")
+    if [[ -f "$R2" ]]; then
+        R2_COUNT=$(( $(zcat "$R2" | wc -l) / 4 ))
+    else
+        R2_COUNT="NA"
+    fi
+
     echo "$SAMPLE,$R1_COUNT,$R2_COUNT" >> "$OUTFILE"
     echo "✅ $SAMPLE → R1: $R1_COUNT | R2: $R2_COUNT"
 done
@@ -339,16 +342,16 @@ MISSING=false
 PAIRED_COUNT=0
 TOTAL_COUNT=0
 
-for R1 in *_1.fastq.gz *_R1.fastq.gz *_R1_*.fastq.gz *_001.fastq.gz; do
+for R1 in *_1.fastq.gz; do
     [[ -f "$R1" ]] || continue
     TOTAL_COUNT=$((TOTAL_COUNT+1))
-    SAMPLE=${R1%_1.fastq.gz}; SAMPLE=${SAMPLE%_R1.fastq.gz}; SAMPLE=${SAMPLE%_R1_*.fastq.gz}; SAMPLE=${SAMPLE%_001.fastq.gz}; SAMPLE=${SAMPLE%_R1_001.fastq.gz}
+    SAMPLE=${R1%_1.fastq.gz}
 
-    if [[ -f "${SAMPLE}_2.fastq.gz" || -f "${SAMPLE}_R2.fastq.gz" || -f "${SAMPLE}_R2_*.fastq.gz" || -f "${SAMPLE}_002.fastq.gz" ]]; then
+    if [[ -f "${SAMPLE}_2.fastq.gz" ]]; then
         echo "✅ $SAMPLE — paired"
         PAIRED_COUNT=$((PAIRED_COUNT+1))
     else
-        echo "❌ $SAMPLE — missing R2 file"
+        echo "❌ $SAMPLE — missing _2.fastq.gz file"
         MISSING=true
     fi
 done
@@ -356,6 +359,7 @@ done
 echo -e "\nTotal samples checked: $TOTAL_COUNT"
 echo "Correctly paired samples: $PAIRED_COUNT"
 $MISSING && echo "⚠ Some samples are missing pairs. Fix before running fastp." || echo "✅ All FASTQ files are correctly paired."
+
 ```
 <details>
 <summary>🔗 FASTQ Pairing Check Script Explanation</summary>
@@ -438,11 +442,10 @@ mkdir -p "$OUTDIR"
 
 echo "Sample,R1_min,R1_max,R1_avg,R2_min,R2_max,R2_avg" > "$OUTPUT_CSV"
 
-for R1 in "$FASTQ_DIR"/*_1.fastq.gz "$FASTQ_DIR"/*_R1.fastq.gz; do
+for R1 in "$FASTQ_DIR"/*_1.fastq.gz; do
     [[ -f "$R1" ]] || continue
-    SAMPLE=$(basename "$R1" | sed -E 's/_R?1.*\.fastq\.gz//')
+    SAMPLE=$(basename "$R1" | sed -E 's/_1\.fastq\.gz//')
     R2="$FASTQ_DIR/${SAMPLE}_2.fastq.gz"
-    [[ -f "$R2" ]] || R2="$FASTQ_DIR/${SAMPLE}_R2.fastq.gz"
 
     if [[ -f "$R2" ]]; then
         echo "Processing sample $SAMPLE"
@@ -456,7 +459,7 @@ for R1 in "$FASTQ_DIR"/*_1.fastq.gz "$FASTQ_DIR"/*_R1.fastq.gz; do
 
         echo "$SAMPLE,$STATS_R1,$STATS_R2" >> "$OUTPUT_CSV"
     else
-        echo "⚠ Missing R2 for $SAMPLE, skipping."
+        echo "⚠ Missing _2.fastq.gz for $SAMPLE, skipping."
     fi
 done
 
@@ -543,21 +546,14 @@ mkdir -p "$OUTDIR"
 
 SAMPLES=()
 
-for R1 in "$INDIR"/*_1.fastq.gz "$INDIR"/*_R1.fastq.gz "$INDIR"/*_001.fastq.gz "$INDIR"/*_R1_001.fastq.gz; do
+for R1 in "$INDIR"/*_1.fastq.gz; do
     [[ -f "$R1" ]] || continue
 
-    SAMPLE=$(basename "$R1")
-    SAMPLE=${SAMPLE%%_1.fastq.gz}
-    SAMPLE=${SAMPLE%%_R1.fastq.gz}
-    SAMPLE=${SAMPLE%%_001.fastq.gz}
-    SAMPLE=${SAMPLE%%_R1_001.fastq.gz}
+    SAMPLE=$(basename "$R1" | sed -E 's/_1\.fastq\.gz//')
+    R2="$INDIR/${SAMPLE}_2.fastq.gz"
 
-    if   [[ -f "$INDIR/${SAMPLE}_2.fastq.gz" ]]; then R2="$INDIR/${SAMPLE}_2.fastq.gz"
-    elif [[ -f "$INDIR/${SAMPLE}_R2.fastq.gz" ]]; then R2="$INDIR/${SAMPLE}_R2.fastq.gz"
-    elif [[ -f "$INDIR/${SAMPLE}_002.fastq.gz" ]]; then R2="$INDIR/${SAMPLE}_002.fastq.gz"
-    elif [[ -f "$INDIR/${SAMPLE}_R2_001.fastq.gz" ]]; then R2="$INDIR/${SAMPLE}_R2_001.fastq.gz"
-    else
-        echo "⚠ No R2 file found for $SAMPLE — skipping."
+    if [[ ! -f "$R2" ]]; then
+        echo "⚠ No _2.fastq.gz file found for $SAMPLE — skipping."
         continue
     fi
 
@@ -602,7 +598,6 @@ export OUTDIR FASTP_THREADS
 printf "%s\n" "${SAMPLES[@]}" | parallel -j 3 --colsep ',' run_fastp {1} {2} {3}
 
 echo "🎉 Completed fastp for $(ls "$OUTDIR"/*_fastp.json | wc -l) samples."
-
 ```
 <details>
 <summary>🧹 fastp Trimming Script Explanation</summary>
@@ -662,16 +657,16 @@ View first 10 quality lines in trimmed FASTQ
 ```bash
  Show first 10 quality lines from R1
 ```bash
-echo "🔹 First 10 quality lines from ET3_S55_1 (R1):"
-zcat fastp_results_min_50/ET3_S55_1.trim.fastq.gz \
+echo "🔹 First 10 quality lines from ETRS-003_1 (R1):"
+zcat fastp_results_min_50/ETRS-003_1.trim.fastq.gz \
 | sed -n '4~4p' \
 | head -n 10 \
 | awk '{print "✅ " $0}'
 ```
  Show first 10 quality lines from R2
 ```bash
-echo "🔹 First 10 quality lines from ET3_S55_2 (R2):"
-zcat fastp_results_min_50/ET3_S55_2.trim.fastq.gz \
+echo "🔹 First 10 quality lines from ETRS-003_2 (R2):"
+zcat fastp_results_min_50/ETRS-003_2.trim.fastq.gz \
 | sed -n '4~4p' \
 | head -n 10 \
 | awk '{print "✅ " $0}'
@@ -690,7 +685,7 @@ Count ASCII characters in quality lines:
 ```bash
     Count base composition in R1
 ```bash
-zcat fastp_results_min_50/ET3_S55_1.trim.fastq.gz \
+zcat fastp_results_min_50/ETRS-003_1.trim.fastq.gz \
 | sed -n '4~4p' \
 | awk '{
     for(i=1;i<=length($0);i++){ q[substr($0,i,1)]++ }
@@ -701,7 +696,7 @@ zcat fastp_results_min_50/ET3_S55_1.trim.fastq.gz \
 ```
    Count base composition in R2
 ```bash
-zcat fastp_results_min_50/ET3_S55_2.trim.fastq.gz \
+zcat fastp_results_min_50/ETRS-003_2.trim.fastq.gz \
 | sed -n '4~4p' \
 | awk '{
     for(i=1;i<=length($0);i++){ q[substr($0,i,1)]++ }
@@ -740,21 +735,25 @@ OUTFILE="$OUTDIR/trimmed_read_counts.csv"
 echo "Sample,R1_reads,R2_reads" > "$OUTFILE"
 echo "📊 Counting reads in trimmed FASTQ files from '$INDIR'..."
 
-for R1 in "$INDIR"/*_1.trim.fastq.gz "$INDIR"/*_R1.trim.fastq.gz; do
+for R1 in "$INDIR"/*_1.trim.fastq.gz; do
     [[ -f "$R1" ]] || continue
-    SAMPLE=$(basename "$R1" | sed -E 's/_R?1.*\.trim\.fastq\.gz//')
-    R2=""
-    for suffix in "_2.trim.fastq.gz" "_R2.trim.fastq.gz" "_R2_*.trim.fastq.gz"; do
-        [[ -f "$INDIR/${SAMPLE}${suffix}" ]] && R2="$INDIR/${SAMPLE}${suffix}" && break
-    done
-    R1_COUNT=$(( $(zcat "$R1" | wc -l) / 4 ))
-    R2_COUNT=$([[ -n "$R2" ]] && echo $(( $(zcat "$R2" | wc -l) / 4 )) || echo "NA")
+    SAMPLE=$(basename "$R1" | sed -E 's/_1\.trim\.fastq\.gz//')
+    R2="$INDIR/${SAMPLE}_2.trim.fastq.gz"
+
+    if [[ -f "$R2" ]]; then
+        R1_COUNT=$(( $(zcat "$R1" | wc -l) / 4 ))
+        R2_COUNT=$(( $(zcat "$R2" | wc -l) / 4 ))
+    else
+        R1_COUNT=$(( $(zcat "$R1" | wc -l) / 4 ))
+        R2_COUNT="NA"
+        echo "⚠ Missing _2 file for $SAMPLE"
+    fi
+
     echo "$SAMPLE,$R1_COUNT,$R2_COUNT" >> "$OUTFILE"
     echo "✅ $SAMPLE → R1: $R1_COUNT | R2: $R2_COUNT"
 done
 
 echo "🎉 All done! Read counts saved to '$OUTFILE'"
-
 
 ```
 <details>
@@ -824,6 +823,7 @@ mkdir -p "$OUTDIR"
 echo "Sample,R1_min,R1_max,R1_avg,R2_min,R2_max,R2_avg" > "$OUTPUT_CSV"
 
 for R1 in "$FASTQ_DIR"/*_1.trim.fastq.gz; do
+    [[ -f "$R1" ]] || continue
     SAMPLE=$(basename "$R1" _1.trim.fastq.gz)
     R2="${FASTQ_DIR}/${SAMPLE}_2.trim.fastq.gz"
 
@@ -849,11 +849,11 @@ for R1 in "$FASTQ_DIR"/*_1.trim.fastq.gz; do
 
         echo "$SAMPLE,$STATS_R1,$STATS_R2" >> "$OUTPUT_CSV"
     else
-        echo "⚠ Missing R2 for $SAMPLE, skipping."
+        echo "⚠ Missing _2 file for $SAMPLE, skipping."
     fi
 done
 
-echo "✅ Trimmed read length summary saved to $OUTPUT_CSV"
+echo "✅ Trimmed read length summary saved to $OUTPU
 
 ```
 <details>
