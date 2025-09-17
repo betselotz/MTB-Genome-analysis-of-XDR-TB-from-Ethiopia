@@ -235,24 +235,25 @@ echo "🎉 All done! Read counts saved to '$OUTFILE'"
 ```
 
 <details>
-<summary>📊 FASTQ Read Count Script Overview</summary>
+<summary>📄 Script Overview</summary>
 
-- `INDIR="raw_data"` → Directory containing input FASTQ files.  
-- `OUTDIR="csv_output"` → Directory where the CSV file will be saved; created automatically if it doesn’t exist.  
-- `OUTFILE="$OUTDIR/fastq_read_counts.csv"` → CSV file to store read counts.  
-- `echo "Sample,R1_reads,R2_reads" > "$OUTFILE"` → Creates the CSV header.  
-- `echo "📊 Counting reads in FASTQ files from '$INDIR'..."` → Prints starting message.  
-- `for R1 in "$INDIR"/*_1.fastq.gz "$INDIR"/*_R1.fastq.gz; do ... done` → Loops through all R1 FASTQ files.  
-- `[[ -f "$R1" ]] || continue` → Skips if the R1 file does not exist.  
-- `SAMPLE=$(basename "$R1" | sed -E 's/_R?1.*\.fastq\.gz//')` → Extracts sample name from the file name.  
-- `for suffix in "_2.fastq.gz" "_R2.fastq.gz" "_R2_*.fastq.gz"; do ... done` → Finds the corresponding R2 file if it exists.  
-- `R1_COUNT=$(( $(zcat "$R1" | wc -l) / 4 ))` → Counts reads in R1 by dividing total lines by 4.  
-- `R2_COUNT=$([[ -n "$R2" ]] && echo $(( $(zcat "$R2" | wc -l) / 4 )) || echo "NA")` → Counts reads in R2 if present; otherwise outputs "NA".  
-- `echo "$SAMPLE,$R1_COUNT,$R2_COUNT" >> "$OUTFILE"` → Appends counts to the CSV file.  
-- `echo "✅ $SAMPLE → R1: $R1_COUNT | R2: $R2_COUNT"` → Prints progress for each sample.  
-- `echo "🎉 All done! Read counts saved to '$OUTFILE'"` → Prints completion message.  
+Counts reads in paired-end FASTQ files and outputs a CSV.  
 
-</details>unsaved
+- 🛡 `set -euo pipefail` → safe script execution  
+- 📂 `INDIR="raw_data"` → input FASTQ folder  
+- 📂 `OUTDIR="csv_output"` → output CSV folder (auto-created)  
+- 📝 `OUTFILE="$OUTDIR/fastq_read_counts.csv"` → CSV to store counts  
+- 🔄 Loop through R1 files: `for R1 in "$INDIR"/*_1.fastq.gz`  
+- ⛔ Skip missing files: `[[ -f "$R1" ]] || continue`  
+- 🏷 Extract sample name: `basename "$R1" | sed -E 's/_1\.fastq\.gz//'`  
+- 🔗 Find R2: `R2="$INDIR/${SAMPLE}_2.fastq.gz"`  
+- 📊 Count reads: `R1_COUNT=$(zcat "$R1" | wc -l /4)`, `R2_COUNT=…` or `"NA"`  
+- ➕ Append to CSV: `echo "$SAMPLE,$R1_COUNT,$R2_COUNT" >> "$OUTFILE"`  
+- ✅ Progress message per sample  
+- 🎉 Completion message  
+
+</details>
+
 
 ### 3. Base composition
 Checking the nucleotide composition of each FASTQ file helps assess sequencing quality. Balanced proportions of A, T, G, and C indicate high-quality data with minimal bias. This script counts the occurrence of each base in both paired-end files:
@@ -268,20 +269,21 @@ for fq in raw_data/ETRS-003_1.fastq.gz raw_data/ETRS-003_2.fastq.gz; do
 done
 ```
 <details>
-<summary>🧬 Nucleotide Counting Script Explanation</summary>
+<summary>🧬 Base Counting Script Overview</summary>
 
-- `for fq in raw_data/ETRS-003_1.fastq.gz raw_data/ETRS-003_2.fastq.gz; do ... done` → Loops over the two specified FASTQ files (R1 and R2).  
-- `[ -f "$fq" ] || continue` → Skips the iteration if the file does not exist.  
-- `echo "Counting bases in $fq..."` → Prints which file is being processed.  
-- `zcat "$fq"` → Decompresses the FASTQ file and streams its content to standard output.  
-- `awk 'NR%4==2 { for(i=1;i<=length($0);i++) b[substr($0,i,1)]++ } END { for(base in b) print base, b[base] }'` → Counts nucleotides:  
-  - `NR%4==2` → Only processes the **sequence line** of each FASTQ read.  
-  - `for(i=1;i<=length($0);i++)` → Iterates over each nucleotide in the sequence line.  
-  - `b[substr($0,i,1)]++` → Increments a counter for each base (A, T, G, C, N, or other).  
-  - `END { for(base in b) print base, b[base] }` → Prints the total counts for each base after processing the file.  
-- `echo "----------------------"` → Adds a visual separator between files for readability.  
+Counts nucleotide bases in specific FASTQ files.  
+
+- 🔄 Loops through specified FASTQ files: `raw_data/ETRS-003_1.fastq.gz` and `_2.fastq.gz`  
+- ⛔ Skips missing files: `[ -f "$fq" ] || continue`  
+- 🖨 Prints message: `"Counting bases in $fq..."`  
+- 🧮 Counts bases using `awk`:  
+  - `NR%4==2` → selects sequence lines  
+  - Loops over each character to tally `A, C, G, T, N`  
+  - Prints counts per base at the end  
+- ➖ Prints separator `"----------------------"` between files  
 
 </details>
+
 
 
 ### 4. Quality score summary
@@ -292,16 +294,17 @@ zcat raw_data/ETRS-003_1.fastq.gz | sed -n '4~4p' | head -n 10
 zcat raw_data/ETRS-003_2.fastq.gz | sed -n '4~4p' | head -n 10
 ```
 <details>
-<summary>🔍 View FASTQ Quality Scores</summary>
+<summary>🔍 FASTQ Quality Lines Preview</summary>
 
-- `zcat raw_data/ETRS-003_1.fastq.gz | sed -n '4~4p' | head -n 10`  
-  - Decompresses R1 FASTQ.  
-  - `sed -n '4~4p'` → Prints every 4th line starting from line 4 (the **quality score line** for each read).  
-  - `head -n 10` → Shows only the first 10 quality lines for quick inspection.  
+Displays the first 10 quality lines from paired-end FASTQ files.  
 
-- `zcat raw_data/ETRS-003_2.fastq.gz | sed -n '4~4p' | head -n 10`  
-  - Same as above, but for R2 FASTQ.  
+- 🔄 Reads R1 and R2 FASTQ files using `zcat`  
+- 📝 `sed -n '4~4p'` → selects every 4th line (quality scores)  
+- 👀 `head -n 10` → shows only the first 10 quality lines  
+- 🖨 Prints output directly to the terminal  
+
 </details>
+
 
 FASTQ quality scores are encoded as ASCII characters. Counting the occurrence of each character provides a quantitative overview of base quality across the reads:
 ```bash
@@ -309,16 +312,17 @@ zcat raw_data/ETRS-003_1.fastq.gz | sed -n '4~4p' | awk '{for(i=1;i<=length($0);
 zcat raw_data/ETRS-003_2.fastq.gz | sed -n '4~4p' | awk '{for(i=1;i<=length($0);i++){q[substr($0,i,1)]++}} END{for (k in q) print k,q[k]}'
 ```
 <details>
-<summary>🔢 Count Quality Score Frequencies</summary>
+<summary>📊 Quality Score Base Counting</summary>
 
-- `zcat raw_data/ETRS-003_1.fastq.gz | sed -n '4~4p' | awk '{for(i=1;i<=length($0);i++){q[substr($0,i,1)]++}} END{for (k in q) print k,q[k]}'`  
-  - Decompresses R1 FASTQ.  
-  - `sed -n '4~4p'` → Selects every 4th line (the **quality line**).  
-  - `awk '{for(i=1;i<=length($0);i++){q[substr($0,i,1)]++}} END{for (k in q) print k,q[k]}'` → Counts occurrences of each quality score character.  
+Counts the occurrence of each quality score character in FASTQ files.  
 
-- `zcat raw_data/ETRS-003_2.fastq.gz | sed -n '4~4p' | awk '{for(i=1;i<=length($0);i++){q[substr($0,i,1)]++}} END{for (k in q) print k,q[k]}'`  
-  - Same as above, but for R2 FASTQ.  
+- 🔄 Reads R1 and R2 FASTQ files using `zcat`  
+- 📝 `sed -n '4~4p'` → selects every 4th line (quality score lines)  
+- 🧮 `awk` → loops over each character in quality lines to tally counts  
+- 🖨 Prints counts per quality score character for each file  
+
 </details>
+
 
 ### 5.   Checking FASTQ Pairing 
 
@@ -362,26 +366,21 @@ $MISSING && echo "⚠ Some samples are missing pairs. Fix before running fastp."
 
 ```
 <details>
-<summary>🔗 FASTQ Pairing Check Script Explanation</summary>
+<summary>🔗 FASTQ Pairing Check Script</summary>
 
-- `#!/bin/bash` → Runs the script using Bash.  
-- `set -euo pipefail` → Exits on errors, unset variables, or failed commands.  
-- `INDIR="raw_data"` → Directory containing the FASTQ files.  
-- `[[ "$(basename "$PWD")" != "raw_data" ]] && cd "$INDIR" ...` → Changes to `raw_data` directory if not already there.  
-- `MISSING=false` → Flag to track if any R2 files are missing.  
-- `PAIRED_COUNT=0` / `TOTAL_COUNT=0` → Counters for paired samples and total samples checked.  
-- `for R1 in *_1.fastq.gz *_R1.fastq.gz *_R1_*.fastq.gz *_001.fastq.gz; do ... done` → Loops over all R1 FASTQ files.  
-- `[[ -f "$R1" ]] || continue` → Skips if the file does not exist.  
-- `SAMPLE=...` → Strips common R1 suffixes to extract the sample name.  
-- `if [[ -f "${SAMPLE}_2.fastq.gz" || ... ]]; then ... fi` → Checks if a corresponding R2 file exists.  
-- `echo "✅ $SAMPLE — paired"` → Prints a message if the pair is found.  
-- `echo "❌ $SAMPLE — missing R2 file"` → Prints a message if the pair is missing and sets `MISSING=true`.  
-- `TOTAL_COUNT` and `PAIRED_COUNT` → Track the total and successfully paired samples.  
-- Final messages:  
-  - `⚠ Some samples are missing pairs` → Warns user if any R2 files are missing.  
-  - `✅ All FASTQ files are correctly paired` → Confirms all samples are paired.  
+Verifies that all R1 FASTQ files have corresponding R2 files.  
+
+- 🛡 `set -euo pipefail` → safe script execution  
+- 📂 `INDIR="raw_data"` → input FASTQ folder  
+- 🔄 Checks if current directory is `raw_data`; cd if not  
+- 🔍 Loops through all `_1.fastq.gz` files  
+- 🏷 Extracts sample name: `${R1%_1.fastq.gz}`  
+- ✅ Prints `"paired"` if R2 exists; ❌ prints `"missing"` otherwise  
+- 🔢 Tracks total and paired sample counts  
+- ⚠ Summarizes results: missing pairs warning or all paired confirmation  
 
 </details>
+
 
 ##### Step 4: Make the script executable
 ```bash
@@ -467,26 +466,23 @@ echo "✅ Read length summary saved to $OUTPUT_CSV"
 
 ```
 <details>
-<summary>📊 Read Length Summary Script Explanation</summary>
+<summary>📏 FASTQ Read Length Summary Script</summary>
 
-- `FASTQ_DIR="raw_data"` → Directory containing FASTQ files.  
-- `OUTDIR="csv_output"` → Directory to save CSV output; created automatically if missing.  
-- `OUTPUT_CSV="${OUTDIR}/read_length_summary.csv"` → Output CSV file path.  
-- `mkdir -p "$OUTDIR"` → Ensure output directory exists.  
-- `echo "Sample,R1_min,R1_max,R1_avg,R2_min,R2_max,R2_avg" > "$OUTPUT_CSV"` → CSV header.  
-- `for R1 in "$FASTQ_DIR"/*_1.fastq.gz "$FASTQ_DIR"/*_R1.fastq.gz; do ...` → Loop over all R1 FASTQ files.  
-- `[[ -f "$R1" ]] || continue` → Skip if R1 file does not exist.  
-- `SAMPLE=$(basename "$R1" | sed -E 's/_R?1.*\.fastq\.gz//')` → Extract sample name.  
-- `R2="$FASTQ_DIR/${SAMPLE}_2.fastq.gz"` → Get paired R2 filename; also checks `_R2` naming.  
-- `if [[ -f "$R2" ]]; then ... else ... fi` → Skip sample if R2 is missing.  
-- `calc_stats() { ... }` → Function to calculate min, max, avg read lengths for a FASTQ file.  
-- `STATS_R1=$(calc_stats "$R1")` → Stats for R1.  
-- `STATS_R2=$(calc_stats "$R2")` → Stats for R2.  
-- `echo "$SAMPLE,$STATS_R1,$STATS_R2" >> "$OUTPUT_CSV"` → Append sample stats to CSV.  
-- `echo "⚠ Missing R2 for $SAMPLE, skipping."` → Warning if R2 missing.  
-- `echo "✅ Read length summary saved to $OUTPUT_CSV"` → Final confirmation message.
+Calculates min, max, and average read lengths for paired-end FASTQ files.  
+
+- 🛡 `set -euo pipefail` → safe script execution  
+- 📂 `FASTQ_DIR="raw_data"` → input FASTQ folder  
+- 📂 `OUTDIR="csv_output"` → output folder; auto-created  
+- 📝 `OUTPUT_CSV="read_length_summary.csv"` → stores read length stats  
+- 🔄 Loops through all `_1.fastq.gz` files  
+- 🏷 Extracts sample name: `basename ... | sed -E 's/_1\.fastq\.gz//'`  
+- 🔗 Finds corresponding R2 file; skips if missing  
+- 🧮 `calc_stats()` → calculates min, max, average read lengths using `awk`  
+- ➕ Appends results to CSV: `Sample,R1_min,R1_max,R1_avg,R2_min,R2_max,R2_avg`  
+- ✅ Prints completion message when finished  
 
 </details>
+
 
 ##### Step 3: Save and exit nano
 Press Ctrl + O → Enter (to write the file)
@@ -600,35 +596,25 @@ printf "%s\n" "${SAMPLES[@]}" | parallel -j 3 --colsep ',' run_fastp {1} {2} {3}
 echo "🎉 Completed fastp for $(ls "$OUTDIR"/*_fastp.json | wc -l) samples."
 ```
 <details>
-<summary>🧹 fastp Trimming Script Explanation</summary>
+<summary>✂️ FASTQ Trimming with fastp Script</summary>
 
-- `#!/bin/bash` → Run script with Bash.  
-- `set -euo pipefail` → Exit on errors, undefined variables, or failed pipelines.  
-- `INDIR="raw_data"` → Raw FASTQ directory.  
-- `OUTDIR="fastp_results_min_50"` → Directory for trimmed FASTQs.  
-- `mkdir -p "$OUTDIR"` → Create output directory.  
-- `SAMPLES=()` → Initialize array to store sample info.  
-- `for R1 in ...` → Loop over R1 files with common naming patterns.  
-- `SAMPLE=...` → Extract sample name from R1 filename.  
-- `if ... elif ... else` → Detect corresponding R2 under multiple naming conventions.  
-- `if [[ -f "$OUTDIR/${SAMPLE}_1.trim.fastq.gz" && ... ]]` → Skip already processed samples.  
-- `SAMPLES+=("$SAMPLE,$R1,$R2")` → Store sample info for parallel execution.  
-- `THREADS=$(nproc)` → Detect total CPU cores.  
-- `FASTP_THREADS=$(( THREADS / 2 ))` → Allocate threads per fastp process.  
-- `run_fastp() { ... }` → Function to run fastp per sample:  
-  - `-i / -I` → Input R1/R2  
-  - `-o / -O` → Output trimmed FASTQs  
-  - `-h / -j` → HTML and JSON reports  
-  - `--length_required 50` → Minimum read length  
-  - `--qualified_quality_phred 20` → Quality threshold  
-  - `--detect_adapter_for_pe` → Auto adapter trimming  
-  - `--thread` → Threads for fastp  
-- `export -f run_fastp` → Make function available to GNU Parallel.  
-- `printf "%s\n" "${SAMPLES[@]}" | parallel -j 3 --colsep ',' run_fastp {1} {2} {3}` → Run 3 fastp jobs in parallel.  
-- `echo "🎉 Completed fastp ..."` → Display completion message.
+Trims paired-end FASTQ files using `fastp` and generates JSON/HTML reports.  
+
+- 🛡 `set -euo pipefail` → safe script execution  
+- 📂 `INDIR="raw_data"` → input FASTQ folder  
+- 📂 `OUTDIR="fastp_results_min_50"` → trimmed output folder; auto-created  
+- 🔄 Loops through `_1.fastq.gz` files  
+- 🏷 Extracts sample name and finds corresponding `_2.fastq.gz`; skips missing or already processed samples  
+- 🧵 Determines threads: `FASTP_THREADS=$((nproc / 2))`  
+- ✅ `run_fastp()` → runs `fastp` with:  
+  - min read length 50 (`--length_required 50`)  
+  - quality Phred ≥20 (`--qualified_quality_phred 20`)  
+  - paired-end adapter detection (`--detect_adapter_for_pe`)  
+  - outputs: trimmed FASTQ, JSON, HTML, and log files  
+- ⚡ Uses GNU `parallel` to process multiple samples concurrently  
+- 🎉 Prints completion message with total processed samples  
 
 </details>
-
 
 ##### Step 3: Save & exit nano
 Press CTRL+O, Enter (save)
@@ -673,13 +659,18 @@ zcat fastp_results_min_50/ETRS-003_2.trim.fastq.gz \
 
 ```
 <details>
-  <summary>🔍 How it works</summary>
+<summary>🔍 Preview Trimmed FASTQ Quality Lines</summary>
 
-- `zcat` → Decompresses the trimmed FASTQ.  
-- `sed -n '4~4p'` → Prints every 4th line starting from line 4 (the quality score line of each read).  
-- `head -n 10` → Shows the first 10 quality lines for quick inspection.  
+Displays the first 10 quality score lines from trimmed FASTQ files.  
+
+- 🔹 Reads trimmed R1 and R2 FASTQ files (`fastp_results_min_50/*.trim.fastq.gz`)  
+- 📝 `sed -n '4~4p'` → selects every 4th line (quality scores)  
+- 👀 `head -n 10` → shows only the first 10 lines  
+- ✅ `awk '{print "✅ " $0}'` → adds checkmark for visualization  
+- 🖨 Prints output to terminal with clear labels for R1 and R2  
 
 </details>
+
 
 Count ASCII characters in quality lines:
 ```bash
@@ -706,15 +697,18 @@ zcat fastp_results_min_50/ETRS-003_2.trim.fastq.gz \
 | awk '{print "✅ Base " $1 ": " $2 " occurrences"}'
 ```
 <details>
-  <summary>🔢 How it works</summary>
+<summary>📊 Quality Score Base Counts (Trimmed FASTQ)</summary>
 
-- `zcat` → Decompresses trimmed FASTQ.  
-- `sed -n '4~4p'` → Selects every 4th line (quality score line).  
-- `awk '{for(i=1;i<=length($0);i++){q[substr($0,i,1)]++}} END{for (k in q) print k,q[k]}'` → Counts occurrences of each ASCII character in the quality scores.  
+Counts occurrences of each quality score character in trimmed FASTQ files.  
 
-This helps quickly identify if the quality encoding is correct (usually Phred+33 for Illumina) and whether trimming improved overall quality.
+- 🔹 Reads trimmed R1 and R2 FASTQ files (`fastp_results_min_50/*.trim.fastq.gz`)  
+- 📝 `sed -n '4~4p'` → selects every 4th line (quality score lines)  
+- 🧮 `awk` → loops over each character to tally occurrences  
+- ✅ `awk '{print "✅ Base " $1 ": " $2 " occurrences"}'` → formats counts for clear visualization  
+- 🖨 Prints counts per quality score for R1 and R2  
 
 </details>
+
 
 For batch processing trimmed FASTQ
 ##### Step 1: Open a new script
@@ -757,28 +751,23 @@ echo "🎉 All done! Read counts saved to '$OUTFILE'"
 
 ```
 <details>
-  <summary>📊 Trimmed FASTQ Read Count Script Explanation</summary>
+<summary>📊 Trimmed FASTQ Read Counts</summary>
 
-- `#!/bin/bash` → Runs the script using Bash.  
-- `set -euo pipefail` → Exits on errors, unset variables, or failed commands.  
-- `INDIR="fastp_results_min_50"` → Directory containing trimmed FASTQ files.  
-- `OUTDIR="csv_output"` → Directory to save the output CSV file.  
-- `OUTFILE="$OUTDIR/trimmed_read_counts.csv"` → Path of the output CSV file.  
-- `mkdir -p "$OUTDIR"` → Creates the output directory if it doesn’t exist.  
-- `echo "Sample,R1_reads,R2_reads" > "$OUTFILE"` → Writes the CSV header.  
-- `echo "📊 Counting reads in trimmed FASTQ files from '$INDIR'..."` → Prints starting message.  
-- `for R1 in "$INDIR"/*_1.trim.fastq.gz "$INDIR"/*_R1.trim.fastq.gz; do ... done` → Iterates over all R1 trimmed FASTQ files.  
-- `[[ -f "$R1" ]] || continue` → Skips if the R1 file does not exist.  
-- `SAMPLE=$(basename "$R1" | sed -E 's/_R?1.*\.trim\.fastq\.gz//')` → Extracts the sample name from the filename.  
-- `for suffix in "_2.trim.fastq.gz" "_R2.trim.fastq.gz" "_R2_*.trim.fastq.gz"; do ... done` → Searches for the corresponding R2 file.  
-- `R1_COUNT=$(( $(zcat "$R1" | wc -l) / 4 ))` → Counts number of reads in R1 (lines divided by 4).  
-- `R2_COUNT=$([[ -n "$R2" ]] && echo $(( $(zcat "$R2" | wc -l) / 4 )) || echo "NA")` → Counts number of reads in R2 if present; outputs "NA" for single-end samples.  
-- `echo "$SAMPLE,$R1_COUNT,$R2_COUNT" >> "$OUTFILE"` → Appends sample read counts to the CSV file.  
-- `echo "✅ $SAMPLE → R1: $R1_COUNT | R2: $R2_COUNT"` → Prints per-sample progress.  
-- `echo "🎉 All done! Read counts saved to '$OUTFILE'"` → Prints final completion message.  
+Counts reads in paired trimmed FASTQ files and outputs a CSV.  
+
+- 🛡 `set -euo pipefail` → safe script execution  
+- 📂 `INDIR="fastp_results_min_50"` → folder with trimmed FASTQ files  
+- 📂 `OUTDIR="csv_output"` → CSV output folder; auto-created  
+- 📝 `OUTFILE="trimmed_read_counts.csv"` → stores read counts per sample  
+- 🔄 Loops through `_1.trim.fastq.gz` files  
+- 🏷 Extracts sample name: `basename ... | sed -E 's/_1\.trim\.fastq\.gz//'`  
+- 🔗 Finds corresponding R2 file; if missing, R2 count = "NA"  
+- 🧮 Counts reads: `$(zcat file | wc -l) / 4`  
+- ➕ Appends counts to CSV: `Sample,R1_reads,R2_reads`  
+- ✅ Prints progress for each sample  
+- 🎉 Prints completion message when done  
 
 </details>
-
 
 ##### Step 3: Save and exit nano
 Press Ctrl + O → Enter (to write the file)
@@ -804,6 +793,19 @@ TRIM_R2_COUNT=$(( $(zcat fastp_results_min_50/ET3_S55_2.trim.fastq.gz | wc -l) /
 echo "R1 trimmed reads: $(( RAW_R1_COUNT - TRIM_R1_COUNT ))"
 echo "R2 trimmed reads: $(( RAW_R2_COUNT - TRIM_R2_COUNT ))"
 ```
+<details>
+<summary>✂️ Read Trimming Summary</summary>
+
+Calculates the number of reads removed during trimming for a sample.  
+
+- 🔹 Counts reads in raw FASTQ files: `_1.fastq.gz` and `_2.fastq.gz`  
+- 🔹 Counts reads in trimmed FASTQ files: `_1.trim.fastq.gz` and `_2.trim.fastq.gz`  
+- 🧮 Calculates trimmed reads: `RAW_COUNT - TRIM_COUNT` for R1 and R2  
+- 🖨 Prints the number of reads removed during trimming  
+
+</details>
+
+
 read length summary on trimmed FASTQ files
 ##### Step 1: Open nano to create a new script
 ```bash
@@ -853,28 +855,24 @@ for R1 in "$FASTQ_DIR"/*_1.trim.fastq.gz; do
     fi
 done
 
-echo "✅ Trimmed read length summary saved to $OUTPU
+echo "✅ Trimmed read length summary saved to $OUTPUT
 
 ```
 <details>
-  <summary>📊 Trimmed Read Length Summary Script Explanation</summary>
+<summary>📏 Trimmed FASTQ Read Length Summary</summary>
 
-- `#!/bin/bash` → Run script with Bash.  
-- `FASTQ_DIR="fastp_results_min_50"` → Directory containing trimmed FASTQ files.  
-- `OUTDIR="csv_output"` → Directory to save CSV output.  
-- `OUTPUT_CSV="${OUTDIR}/trimmed_read_length_summary.csv"` → Output CSV file path.  
-- `mkdir -p "$OUTDIR"` → Create output directory if missing.  
-- `echo "Sample,R1_min,R1_max,R1_avg,R2_min,R2_max,R2_avg" > "$OUTPUT_CSV"` → Write CSV header.  
-- `for R1 in "$FASTQ_DIR"/*_1.trim.fastq.gz; do ...` → Loop over all R1 trimmed FASTQ files.  
-- `SAMPLE=$(basename "$R1" _1.trim.fastq.gz)` → Extract sample name.  
-- `R2="${FASTQ_DIR}/${SAMPLE}_2.trim.fastq.gz"` → Find corresponding R2 file.  
-- `if [[ -f "$R2" ]]; then ... else ... fi` → Skip sample if R2 is missing.  
-- `calc_stats() { ... }` → Function to calculate min, max, and average read lengths.  
-- `STATS_R1=$(calc_stats "$R1")` → Compute stats for R1.  
-- `STATS_R2=$(calc_stats "$R2")` → Compute stats for R2.  
-- `echo "$SAMPLE,$STATS_R1,$STATS_R2" >> "$OUTPUT_CSV"` → Append results to CSV.  
-- `echo "⚠ Missing R2 for $SAMPLE, skipping."` → Print warning if R2 not found.  
-- `echo "✅ Trimmed read length summary saved to $OUTPUT_CSV"` → Final confirmation message.  
+Calculates min, max, and average read lengths for paired trimmed FASTQ files.  
+
+- 🛡 `set -euo pipefail` → safe script execution  
+- 📂 `FASTQ_DIR="fastp_results_min_50"` → folder with trimmed FASTQ files  
+- 📂 `OUTDIR="csv_output"` → output folder; auto-created  
+- 📝 `OUTPUT_CSV="trimmed_read_length_summary.csv"` → stores read length stats  
+- 🔄 Loops through `_1.trim.fastq.gz` files  
+- 🏷 Extracts sample name: `basename "$R1" _1.trim.fastq.gz`  
+- 🔗 Finds corresponding R2 file; skips sample if missing  
+- 🧮 `calc_stats()` → calculates min, max, average read lengths using `awk`  
+- ➕ Appends results to CSV: `Sample,R1_min,R1_max,R1_avg,R2_min,R2_max,R2_avg`  
+- ✅ Prints completion message when done  
 
 </details>
 
@@ -930,20 +928,21 @@ fi
 multiqc "$INPUT_DIR" -o "$OUTPUT_DIR"
 
 echo "MultiQC report generated in '$OUTPUT_DIR'."
-
 ```
 <details>
-<summary>📊 MultiQC Script Explanation</summary>
+<summary>📑 Generate MultiQC Report</summary>
 
-- `#!/bin/bash` → Run script with Bash.  
-- `set -euo pipefail` → Exit on errors, undefined variables, or failed pipelines.  
-- `INPUT_DIR="fastp_results_min_50"` → Directory containing fastp JSON/HTML outputs.  
-- `OUTPUT_DIR="multiqc/fastp_multiqc"` → Directory where the aggregated MultiQC report will be saved.  
-- `mkdir -p "$OUTPUT_DIR"` → Create `multiqc` and `fastp_multiqc` directories if they don’t exist.  
-- `if [ ! -d "$INPUT_DIR" ]; then ... fi` → Check that the input directory exists; exit with an error if not.  
-- `multiqc "$INPUT_DIR" -o "$OUTPUT_DIR"` → Run MultiQC on all files in `INPUT_DIR` and save the combined report in `OUTPUT_DIR`.  
+Generates a MultiQC report from trimmed FASTQ files.  
+
+- 🛡 `set -euo pipefail` → safe script execution  
+- 📂 `INPUT_DIR="fastp_results_min_50"` → folder with trimmed FASTQ files  
+- 📂 `OUTPUT_DIR="multiqc/fastp_multiqc"` → folder to store MultiQC report; auto-created  
+- ⚠ Checks if input directory exists; exits if not  
+- 🔄 Runs `multiqc` on the input folder and outputs to the specified directory  
+- 🖨 Prints confirmation message with report location  
 
 </details>
+
 
 ##### Step 3: Save & exit nano
 Press CTRL+O, Enter (save)
@@ -1020,20 +1019,24 @@ done
 echo "📌 All samples processed!"
 ```
 <details>
-<summary>🧪 TB-Profiler Script Explanation</summary>
+<summary>🦠 TBProfiler Sample Profiling</summary>
 
-- `#!/bin/bash` → Run script with Bash.  
-- `set -euo pipefail` → Exit on errors or undefined variables.  
-- `FASTQ_DIR="raw_data"` → Folder containing paired-end FASTQ files.  
-- `for R1 in "$FASTQ_DIR"/*_1.fastq.gz; do ... done` → Loop through all R1 files.  
-- `SAMPLE=$(basename "$R1" _1.fastq.gz)` → Extract sample name from filename.  
-- `R2="$FASTQ_DIR/${SAMPLE}_2.fastq.gz"` → Construct path for paired R2 file.  
-- `if [[ ! -f "$R2" ]]; then ... fi` → Skip sample if paired R2 file is missing.  
-- `tb-profiler profile -1 "$R1" -2 "$R2" --threads 8` → Run TBProfiler on paired reads using 8 threads; outputs are saved automatically in `results/tbprofiler_results/$SAMPLE/`.  
-- `echo "✅ Finished $SAMPLE"` → Completion message per sample.  
-- `echo "📌 All samples processed!"` → Final message after all samples are run.
+Runs TBProfiler on paired-end FASTQ files to profile Mycobacterium tuberculosis samples.  
+
+- 🛡 `set -euo pipefail` → safe script execution  
+- 📂 `FASTQ_DIR="raw_data"` → folder with input FASTQ files  
+- 🔄 Loops through `_1.fastq.gz` files and finds corresponding `_2.fastq.gz`  
+- ❌ Skips samples if paired R2 file is missing  
+- ▶️ Runs `tb-profiler profile` with:  
+  - 8 threads (`--threads 8`)  
+  - output prefix as sample name (`--prefix`)  
+  - TXT report (`--txt`)  
+  - spoligotype analysis (`--spoligotype`)  
+- ✅ Prints progress for each sample  
+- 📌 Prints completion message when all samples are processed  
 
 </details>
+
 
 ##### Step 3: Save and exit nano
 Press Ctrl + O → Enter (to write the file)
@@ -1083,24 +1086,18 @@ echo "✅ Collated all tbprofiler.txt files into tbprofiler_collated.csv"
 
 ```
 <details>
-<summary>📌 Explanation of the TBProfiler collate command</summary>
+<summary>📑 Collate TBProfiler Results</summary>
 
-- `find . -name "tbprofiler.txt"`  
-  Searches the current directory (`.`) and all subdirectories for files named `tbprofiler.txt`.
+Merges all `tbprofiler.txt` outputs into a single CSV file.  
 
-- `-exec awk 'FNR==1 && NR!=1{next} {print}' {} +`  
-  For each `tbprofiler.txt` found:  
-  - `FNR==1 && NR!=1{next}` → skips the header line of every file except the first one.  
-  - `{print}` → prints all other lines (the data).  
-  - `NR` = total number of lines processed so far; `FNR` = line number in current file.
-
-- `| sed 's/\t/,/g'`  
-  Replaces tabs (`\t`) with commas, converting the tab-delimited text into CSV format.
-
-- `> tbprofiler_collated.csv`  
-  Redirects the final output into a file called `tbprofiler_collated.csv`.
+- 🔍 Finds all `tbprofiler.txt` files recursively in the current directory  
+- 🧮 Uses `awk` to skip repeated headers and combine contents  
+- 🔄 Replaces tabs with commas (`sed 's/\t/,/g'`)  
+- ➕ Writes output to `tbprofiler_collated.csv`  
+- ✅ Prints confirmation message after collation  
 
 </details>
+
 
 # 5️⃣ Variant Calling with **Snippy**
 
@@ -1214,30 +1211,28 @@ echo "Snippy results are in: ${OUTDIR}/"
 
 ```
 <details>
-<summary>🌳 Snippy Pipeline Script Explanation</summary>
+<summary>🧬 Snippy Variant Calling Pipeline</summary>
 
-- `#!/bin/bash` → Run script with Bash.  
-- `set -euo pipefail` → Exit on errors, undefined variables, or pipeline failures.  
-- `REF="H37Rv.fasta"` → Reference genome.  
-- `FASTP_DIR="fastp_results_min_50"` → Directory containing trimmed FASTQ files.  
-- `OUTDIR="snippy_results"` → Directory to store Snippy outputs.  
-- `THREADS=8` & `BWA_THREADS=30` → Threads for Snippy and BWA alignment.  
-- `JOBS=4` → Number of samples to run in parallel.  
-- `run_snippy_sample() { ... }` → Function for processing a single sample:  
-  - Checks if paired FASTQ files exist.  
-  - Runs Snippy with specified threads and BWA options.  
-  - Moves key outputs (`.vcf`, `.consensus.fa`, `.bam`, `.bam.bai`, `.snps.tab`) to final directory.  
-  - Deletes temporary Snippy directory.  
-  - Prints confirmation if full VCF is generated.  
-- `export -f run_snippy_sample` → Makes function available for GNU Parallel.  
-- `ls ... | parallel -j "$JOBS" run_snippy_sample {}` → Runs multiple samples in parallel.  
-- Verification section:  
-  - Compares FASTQ sample list vs VCF output list.  
-  - Prints warnings if any sample is missing.  
-- `rm -f fastq_samples.txt snippy_samples.txt` → Cleans temporary lists.  
-- `echo "🎯 All steps completed!"` → Final message indicating pipeline completion.  
+Performs variant calling on paired trimmed FASTQ files against a reference genome using Snippy.  
+
+- 🛡 `set -euo pipefail` → safe script execution  
+- 📂 Input/output directories:  
+  - `FASTP_DIR="fastp_results_min_50"` → trimmed FASTQ files  
+  - `OUTDIR="snippy_results"` → stores Snippy outputs  
+- 🧩 Reference genome: `REF="H37Rv.fasta"`  
+- 🧵 Threads: `THREADS=8`, `BWA_THREADS=30`; parallel jobs: `JOBS=4`  
+- 🔄 `run_snippy_sample()` → for each sample:  
+  - Checks paired R1/R2 files  
+  - Runs Snippy with specified threads and BWA options  
+  - Moves outputs (`.vcf`, `.consensus.fa`, `.bam`, `.bam.bai`, `.snps.tab`) to output folder  
+  - Cleans temporary directories  
+  - Confirms if full VCF generated  
+- ⚡ Uses GNU `parallel` to process multiple samples concurrently  
+- 🔍 Compares FASTQ sample list with Snippy outputs and reports missing samples  
+- 🎯 Prints completion message and output directory  
 
 </details>
+
 
 ##### Step 3: Save and exit nano
 Press Ctrl + O, then Enter (save)
@@ -1274,6 +1269,17 @@ for vcf in "$OUTDIR"/*.vcf; do
     fi
 done
 ```
+<details>
+<summary>📝 Snippy VCF Integrity Check</summary>
+
+Verifies that Snippy-generated VCF files contain the mandatory `#CHROM` header line.  
+
+- 📂 `OUTDIR="snippy_results"` → folder with Snippy VCF files  
+- 🔄 Loops through all `.vcf` files in the folder  
+- ✅ Prints confirmation if `#CHROM` header line exists  
+- ⚠ Warns if VCF is missing the header line  
+
+</details>
 
 # 6️⃣ BAM Quality Check with **Qualimap**
 [`Qualimap`](http://qualimap.conesalab.org/) 
@@ -1321,20 +1327,23 @@ for bam in "$SNIPPY_DIR"/*.bam; do
 done
 ```
 <details>
-<summary>📊 Qualimap BAM QC Script Explanation</summary>
+<summary>📊 Qualimap BAM QC</summary>
 
-- `#!/bin/bash` → Run script with Bash.  
-- `set -euo pipefail` → Exit on errors or undefined variables.  
-- `SNIPPY_DIR="all_bams"` → Directory with Snippy BAM files.  
-- `QUALIMAP_OUT="qualimap_reports"` → Output directory for QC reports.  
-- `mkdir -p "$QUALIMAP_OUT"` → Ensure output directory exists.  
-- `for bam in "$SNIPPY_DIR"/*.bam; do ... done` → Loop over all BAM files.  
-- `sample=$(basename "$bam" .bam)` → Extract sample name.  
-- `outdir="${QUALIMAP_OUT}/${sample}"` → Unique folder per sample.  
-- `qualimap bamqc -bam "$bam" -outdir "$outdir" -outformat pdf:html --java-mem-size=4G` → Run QC, generate PDF & HTML, allocate 4 GB memory.  
-- `echo "Running Qualimap BAM QC for sample: $sample"` → Print progress.
+Performs quality control on BAM files using Qualimap and generates PDF/HTML reports.  
+
+- 🛡 `set -euo pipefail` → safe script execution  
+- 📂 `SNIPPY_DIR="snippy_results"` → folder with BAM files  
+- 📂 `QUALIMAP_OUT="qualimap_reports"` → output folder for QC reports; auto-created  
+- 🔄 Loops through all `.bam` files  
+- 🏷 Extracts sample name from BAM file  
+- 🧩 Creates per-sample output directory  
+- ⚡ Runs `qualimap bamqc` with:  
+  - PDF and HTML output (`-outformat pdf:html`)  
+  - Java memory allocation (`--java-mem-size=4G`)  
+- 🖨 Prints progress for each sample  
 
 </details>
+
 
 ##### Step 3: Save and exit nano
 
@@ -1395,16 +1404,16 @@ echo "MultiQC report generated in '$OUTPUT_DIR'."
 
 ```
 <details>
-<summary>📊 MultiQC for Qualimap Reports – Script Explanation</summary>
+<summary>📑 Generate MultiQC Report for Qualimap</summary>
 
-- `#!/bin/bash` → Run the script with Bash.  
-- `set -euo pipefail` → Exit on errors, undefined variables, or failed pipelines.  
-- `INPUT_DIR="qualimap_reports"` → Directory containing Qualimap BAM QC reports.  
-- `OUTPUT_DIR="multiqc/qualimap_multiqc"` → Directory where the aggregated MultiQC report will be saved.  
-- `mkdir -p "$OUTPUT_DIR"` → Create `multiqc` and `qualimap_multiqc` directories if they don’t exist.  
-- `if [ ! -d "$INPUT_DIR" ]; then ... fi` → Check that the input directory exists; exit with an error if not.  
-- `multiqc "$INPUT_DIR" -o "$OUTPUT_DIR"` → Run MultiQC on all files in `INPUT_DIR` and save the combined report in `OUTPUT_DIR`.  
-- `echo "MultiQC report generated in '$OUTPUT_DIR'."` → Confirmation message after successful completion.
+Generates a MultiQC report from per-sample Qualimap BAM QC results.  
+
+- 🛡 `set -euo pipefail` → safe script execution  
+- 📂 `INPUT_DIR="qualimap_reports"` → folder with Qualimap per-sample reports  
+- 📂 `OUTPUT_DIR="multiqc/qualimap_multiqc"` → folder to store MultiQC report; auto-created  
+- ⚠ Checks if input directory exists; exits if not  
+- 🔄 Runs `multiqc` on input folder and outputs to the specified directory  
+- 🖨 Prints confirmation message with report location  
 
 </details>
 
@@ -1543,19 +1552,18 @@ echo "✅ All VCFs filtered using $REGION_FILTER and saved in $OUTDIR"
 
 ```
 <details>
-<summary>🧬 TB Variant Filter Script Explanation</summary>
+<summary>🧬 TB Variant Filtering</summary>
 
-- `#!/bin/bash` → Run script with Bash.  
-- `set -euo pipefail` → Exit on errors or undefined variables.  
-- `CURDIR=$(pwd)` → Save current working directory.  
-- `SNIPPY_DIR="$CURDIR/snippy_results"` → Folder containing Snippy VCFs.  
-- `OUTDIR="$CURDIR/tb_variant_filter_results"` → Output folder for filtered VCFs.  
-- `mkdir -p "$OUTDIR"` → Ensure output directory exists.  
-- `REGION_FILTER="farhat_rlc"` → Predefined region filter for TB variant filtering.  
-- `for vcf in "$SNIPPY_DIR"/*.vcf; do ... done` → Loop through all Snippy VCFs.  
-- `sample=$(basename "$vcf")` → Extract filename for naming filtered outputs.  
-- `tb_variant_filter --region_filter "$REGION_FILTER" "$vcf" "$OUTDIR/${sample%.vcf}.filtered.vcf"` → Filter each VCF using the specified region filter and save result.  
-- `echo "✅ All VCFs filtered using $REGION_FILTER and saved in $OUTDIR"` → Prints confirmation when all VCFs are filtered.
+Filters Snippy-generated VCF files using `tb_variant_filter` with a specified region filter.  
+
+- 🛡 `set -euo pipefail` → safe script execution  
+- 📂 `SNIPPY_DIR="snippy_results"` → folder with Snippy VCF files  
+- 📂 `OUTDIR="tb_variant_filter_results"` → output folder for filtered VCFs; auto-created  
+- 🏷 `REGION_FILTER="farhat_rlc"` → region filter applied to variants  
+- 🔄 Loops through all `.vcf` files  
+- ⚡ Runs `tb_variant_filter --region_filter` for each VCF and saves as `.filtered.vcf`  
+- ⚠ Warns if filtered VCF is empty  
+- ✅ Prints completion message with output directory  
 
 </details>
 
@@ -1696,6 +1704,27 @@ for vcf in "$SNIPPY_DIR"/*.vcf; do
     echo "$sample,$unfiltered_total,$unfiltered_pass,$filtered_total,$filtered_pass,$ratio" | tee -a "$OUTFILE"
 done
 ```
+<details>
+<summary>📊 Variant Filter Summary</summary>
+
+Generates a CSV summary comparing unfiltered and filtered TB VCF variants.  
+
+- 🛡 `set -euo pipefail` → safe script execution  
+- 📂 Input directories:  
+  - `SNIPPY_DIR="snippy_results"` → unfiltered VCFs  
+  - `FILTERED_DIR="tb_variant_filter_results"` → filtered VCFs  
+- 📂 `OUTDIR="csv_output"` → stores summary CSV (`variant_filter_summary.csv`)  
+- ⚡ Filters variants based on:  
+  - Minimum depth: `MIN_DP=20`  
+  - Minimum quality: `MIN_QUAL=30`  
+- 🧮 `count_pass_variants()` → counts variants meeting depth & quality thresholds  
+- 🔄 Loops through samples to calculate:  
+  - Total variants (unfiltered/filtered)  
+  - PASS variants (unfiltered/filtered)  
+  - PASS retention ratio  
+- 🖨 Appends results to CSV and prints per sample  
+
+</details>
 
 ##### Step  3: Save and exit nano
    Press Ctrl+O → Enter to save.
@@ -1742,6 +1771,19 @@ for vcf in tb_variant_filter_results/*.vcf; do
     bcftools index "$gz_file"
 done
 ```
+<details>
+<summary>🗄️ Compress & Index VCFs</summary>
+
+Compresses and indexes filtered VCF files for downstream analysis.  
+
+- 🔄 Loops through all `.vcf` files in `tb_variant_filter_results/`  
+- ⚠ Skips empty VCF files  
+- 🧩 Compresses VCFs using `bgzip` → creates `.vcf.gz`  
+- 📂 Indexes compressed VCFs with `bcftools index`  
+- 🖨 Prints progress messages for each file  
+
+</details>
+
 ##### Step 2: Create a script to generate consensus sequences
 ```bash
 nano generate_consensus_all.sh
@@ -1769,28 +1811,24 @@ for vcf in "$VCFDIR"/*.vcf; do
     bcftools index "$gz_file"
     bcftools consensus -f "$CURDIR/H37Rv.fasta" "$gz_file" | sed "1s/.*/>$sample/" > "$OUTDIR/${sample}.consensus.fasta"
 done
-
 ```
 <details>
-<summary>🧬 VCF-to-Consensus Script Explanation</summary>
+<summary>🧬 Generate Consensus Sequences</summary>
 
-- `#!/bin/bash` → Run script with Bash.  
-- `set -euo pipefail` → Exit on errors or undefined variables.  
-- `CURDIR=$(pwd)` → Save current working directory.  
-- `VCFDIR="$CURDIR/tb_variant_filter_results"` → Folder with filtered VCFs.  
-- `OUTDIR="$CURDIR/consensus_sequences"` → Folder for consensus FASTA sequences.  
-- `mkdir -p "$OUTDIR"` → Ensure output directory exists.  
-- `for vcf in "$VCFDIR"/*.vcf; do ... done` → Loop through all filtered VCF files.  
-- `sample=$(basename "$vcf" .vcf)` → Extract sample name.  
-- `bgzip -c "$vcf" > "$vcf.gz"` → Compress VCF with bgzip.  
-- `bcftools index "$vcf.gz"` → Index compressed VCF.  
-- `bcftools consensus -f "$CURDIR/H37Rv.fasta" "$vcf.gz" | sed "1s/.*/>$sample/" > "$OUTDIR/${sample}.consensus.fasta"` → Generate consensus FASTA and replace header with sample name.  
-- `echo "✅ $sample consensus generated"` → Confirmation per sample.  
-- `echo "🎉 All consensus sequences saved in $OUTDIR"` → Final message.  
+Generates per-sample consensus FASTA sequences from filtered VCFs.  
 
-**⚠ Note:** Activate the `tb_consensus_env` before running this script.
+- 🛡 `set -euo pipefail` → safe script execution  
+- 📂 `VCFDIR="tb_variant_filter_results"` → folder with filtered VCFs  
+- 📂 `OUTDIR="consensus_sequences"` → stores consensus FASTA files; auto-created  
+- 🔄 Loops through all `.vcf` files  
+- ⚠ Skips empty VCFs  
+- 🗄 Compresses VCFs using `bgzip` and indexes with `bcftools index`  
+- 🧩 Generates consensus sequence using `bcftools consensus` and reference `H37Rv.fasta`  
+- 🏷 Replaces FASTA header with sample name and saves output  
+- 🖨 Prints progress messages for each sample  
 
 </details>
+
 
 ##### Step 4: Save and exit nano
 Press Ctrl + O → Enter (to write the file)
@@ -1832,14 +1870,17 @@ echo "✅ All consensus FASTA files have been renamed to .fasta."
 ```
 
 <details>
-<summary>📝 Rename Consensus FASTA Files</summary>
+<summary>✏️ Rename Consensus FASTA Files</summary>
 
-- `FASTA_DIR="consensus_sequences"` → Directory containing consensus FASTA files.  
-- `for f in "$FASTA_DIR"/*.filtered.consensus.fasta; do ... done` → Loop over all FASTA files ending with `.filtered.consensus.fasta`.  
-- `mv "$f" "${f/.filtered.consensus/}"` → Rename each file by removing `.filtered.consensus` from filename.  
-- `echo "✅ All consensus FASTA files have been renamed to .fasta."` → Confirmation message after renaming.
+Simplifies filenames of consensus sequences by removing `.filtered.consensus` from the name.  
+
+- 📂 `FASTA_DIR="consensus_sequences"` → folder with consensus FASTA files  
+- 🔄 Loops through all `.filtered.consensus.fasta` files  
+- ✂ Renames files to remove `.filtered.consensus` → results in `.fasta`  
+- 🖨 Prints confirmation message after renaming  
 
 </details>
+
 
 ###  Update headers inside the FASTA files
 ```bash
@@ -1854,17 +1895,17 @@ done
 echo "🎉 All FASTA headers have been successfully updated."
 ```
 <details>
-<summary>📝 Update FASTA Headers with Sample Names</summary>
+<summary>📝 Update FASTA Headers</summary>
 
-- `FASTA_DIR="consensus_sequences"` → Directory containing FASTA files.  
-- `for f in "$FASTA_DIR"/*.fasta; do ... done` → Loop through all FASTA files.  
-- `sample=$(basename "$f" .fasta)` → Extract sample name from filename.  
-- `awk -v s="$sample" '/^>/{print ">" s; next} {print}' "$f" > "${f}.tmp" && mv "${f}.tmp" "$f"` → Replace FASTA header with `>sample`, keep sequence lines unchanged.  
-- `echo "✅ Updated header in: $(basename "$f")"` → Logs each updated file.  
-- `echo "🎉 All FASTA headers have been successfully updated."` → Completion message after all files processed.
+Updates FASTA headers so each sequence header matches its sample name.  
+
+- 📂 `FASTA_DIR="consensus_sequences"` → folder with consensus FASTA files  
+- 🔄 Loops through all `.fasta` files  
+- ✂ Replaces header (`>`) with the sample name extracted from the filename  
+- 🗄 Saves changes by overwriting original files  
+- 🖨 Prints confirmation for each file and a final success message  
 
 </details>
-
 
 ### Using `grep` and `wc`
 We remove the FASTA headers (`>` lines) and count the remaining nucleotides to get the total genome length:
@@ -1876,6 +1917,18 @@ for f in consensus_sequences/*.fasta; do
     echo "$sample : $length bp"
 done
 ```
+<details>
+<summary>📏 Report Consensus Sequence Lengths</summary>
+
+Calculates and prints the length (in base pairs) of each consensus FASTA file.  
+
+- 📂 `consensus_sequences/*.fasta` → folder with consensus FASTA files  
+- 🔄 Loops through all FASTA files  
+- ✂ Strips headers (`>`) and concatenates sequence lines  
+- 🧮 Counts total bases using `wc -c`  
+- 🖨 Prints sample name and sequence length in bp  
+
+</details>
 
 to save the result in csv file 
 ```bash
@@ -1897,20 +1950,20 @@ echo "✅ Consensus genome lengths saved to $OUTPUT_CSV"
 
 ```
 <details>
-<summary>📖 Explanation of calculating consensus genome lengths and saving the result in CSV</summary>
+<summary>🧮 Export Consensus Genome Lengths</summary>
 
-- `FASTA_DIR="consensus_sequences"` → sets the directory containing consensus FASTA files.  
-- `OUTDIR="csv_output"` → defines the directory where the CSV will be saved.  
-- `mkdir -p "$OUTDIR"` → ensures the output directory exists before writing the file.  
-- `OUTPUT_CSV="${OUTDIR}/consensus_lengths.csv"` → defines the CSV file path inside `OUTDIR`.  
-- `echo "Sample,Length_bp" > "$OUTPUT_CSV"` → creates the CSV file and writes the header line.  
-- `for f in "$FASTA_DIR"/*.fasta; do ... done` → loops over all FASTA files in the directory.  
-- `sample=$(basename "$f" .fasta)` → extracts the sample name from the FASTA filename.  
-- `length=$(grep -v ">" "$f" | tr -d '\n' | wc -c)` → removes header lines (`>`), concatenates sequences into one line, and counts nucleotides.  
-- `echo "$sample,$length" >> "$OUTPUT_CSV"` → appends the sample name and its sequence length to the CSV file.  
-- `echo "✅ Consensus genome lengths saved to $OUTPUT_CSV"` → prints a completion message when finished.  
+Calculates the length of each consensus FASTA sequence and saves results to a CSV.  
+
+- 📂 `FASTA_DIR="consensus_sequences"` → folder with consensus FASTA files  
+- 📂 `OUTDIR="csv_output"` → folder for CSV output; auto-created  
+- 🗄 `OUTPUT_CSV="csv_output/consensus_lengths.csv"` → output CSV file  
+- 🔄 Loops through all FASTA files  
+- ✂ Strips headers (`>`) and counts bases  
+- 🖨 Appends sample name and length (bp) to CSV  
+- ✅ Prints confirmation message with CSV location  
 
 </details>
+
 
 # 9️⃣ Multiple Sequence Alignment
 
@@ -1957,6 +2010,18 @@ cat consensus_sequences/*.fasta > consensus_sequences/all_consensus.fasta
 mkdir -p mafft_results
 mafft --auto --parttree consensus_sequences/all_consensus.fasta > mafft_results/aligned_consensus.fasta
 ```
+<details>
+<summary>🧬 Align Consensus Sequences with MAFFT</summary>
+
+Performs multiple sequence alignment of consensus genomes using MAFFT.  
+
+- 📂 `consensus_sequences/all_consensus.fasta` → input FASTA with all consensus sequences  
+- 📂 `mafft_results` → output folder for aligned sequences; auto-created  
+- ⚡ Runs `mafft --auto --parttree` for optimized alignment  
+- 🗄 Saves aligned sequences to `mafft_results/aligned_consensus.fasta`  
+
+</details>
+
 ##### Step 3: Verify the alignment
 
 A. Quickly inspect the top of the aligned FASTA:
@@ -2007,34 +2072,17 @@ fi
 
 ```
 <details>
-<summary>📖 Explanation of MAFFT output check script</summary>
+<summary>🔍 Check MAFFT Alignment Quality</summary>
 
-- `FILE="mafft_results/aligned_consensus.fasta"` → sets the path to the MAFFT alignment output file.  
+Performs basic QC on the aligned consensus sequences to assess length consistency.  
 
-- `if [[ ! -f "$FILE" ]]; then ... fi` → checks if the file exists; exits with a message if it does not.  
-
-- `SEQ_COUNT=$(grep -c ">" "$FILE")` → counts the number of sequences in the alignment.  
-  - In FASTA format, each sequence starts with a `>` header.  
-
-- `LENGTHS=($(grep -v ">" "$FILE" | awk 'BEGIN{RS=">"} NR>1{print length($0)}'))` → creates an array of sequence lengths.  
-  - Removes header lines and calculates the length of each sequence.  
-
-- `TOTAL_LENGTH=$(IFS=+; echo "$((${LENGTHS[*]}))")` → sums all sequence lengths to get the total number of base pairs.  
-
-- `MIN_LENGTH=$(printf "%s\n" "${LENGTHS[@]}" | sort -n | head -n1)` → finds the shortest sequence length.  
-
-- `MAX_LENGTH=$(printf "%s\n" "${LENGTHS[@]}" | sort -n | tail -n1)` → finds the longest sequence length.  
-
-- `AVG_LENGTH=$(( TOTAL_LENGTH / SEQ_COUNT ))` → calculates the average sequence length.  
-
-- `echo ...` → prints summary statistics for the alignment: number of sequences, total, min, max, and average lengths.  
-
-- `if [[ $MIN_LENGTH -eq $MAX_LENGTH ]]; then ... else ... fi` → checks if all sequences are the same length.  
-  - If yes → alignment looks good.  
-  - If no → prints a warning that sequence lengths vary, indicating possible gaps or misalignment.  
+- 📂 `FILE="mafft_results/aligned_consensus.fasta"` → input aligned FASTA  
+- ⚠ Exits if file does not exist  
+- 🧮 Counts sequences, total bases, minimum, maximum, and average sequence lengths  
+- 🖨 Prints summary stats per alignment  
+- ✅ Checks if all sequences have equal length; flags potential misalignment if lengths vary  
 
 </details>
-
 
 D. Using `seqkit` stats (recommended)
 seqkit is a fast toolkit for FASTA/Q file summaries. It gives a detailed report of sequences in a file:
@@ -2043,6 +2091,7 @@ conda activate seqkit_env
 seqkit stats mafft_results/aligned_consensus.fasta
 ```
 E. Check for gaps / alignment columns
+
 <details>
 <summary>💡 Understanding Gaps in Multiple Sequence Alignment (MSA)</summary>
 
@@ -2078,7 +2127,6 @@ grep -v ">" mafft_results/aligned_consensus.fasta \
 
 </details>
 
-
 F. Compute pairwise identity
 ```bash
 awk '/^>/{if(seqlen){print seqlen}; seqlen=0; next} {seqlen+=length($0)} END{print seqlen}' mafft_results/aligned_consensus.fasta \
@@ -2086,12 +2134,40 @@ awk '/^>/{if(seqlen){print seqlen}; seqlen=0; next} {seqlen+=length($0)} END{pri
 | uniq -c \
 | awk -v L=60 '{print ($2<L?"⚠️ ":"✅ ") $1 " sequences of length " $2 " bp"}'
 ```
+<details>
+<summary>📏 Aligned Sequence Length Summary</summary>
+
+Summarizes the length distribution of sequences in an aligned FASTA.  
+
+- 📂 `mafft_results/aligned_consensus.fasta` → input aligned FASTA  
+- 🔄 Computes the length of each sequence  
+- 📊 Counts unique lengths and number of sequences per length  
+- ⚠ Marks sequences shorter than 60 bp with a warning  
+- ✅ Prints summary with sequence counts and lengths  
+
+</details>
+
 G. Use AMAS (Alignment Manipulation and Summary)
 AMAS is a Python tool to summarize alignments:
 ```bash
 conda activate amas_env
 AMAS.py summary -f fasta -d dna -i mafft_results/aligned_consensus.fasta
 ```
+<details>
+<summary>📊 AMAS Alignment Summary</summary>
+
+Generates a summary of the aligned consensus sequences using AMAS.  
+
+- 🐍 `conda activate amas_env` → activates the AMAS environment  
+- ⚡ `AMAS.py summary` → summarizes alignment statistics  
+- 🔹 Options:  
+  - `-f fasta` → input format is FASTA  
+  - `-d dna` → sequence type is DNA  
+  - `-i mafft_results/aligned_consensus.fasta` → input aligned FASTA file  
+- 🖨 Outputs alignment summary including sequence counts, lengths, and base composition  
+
+</details>
+
 H. Use aliview or MEGA for GUI inspection
 Load the FASTA alignment in AliView, MEGA, or Geneious.
 Advantages:
@@ -2161,17 +2237,22 @@ iqtree2 -s mafft_results/aligned_consensus.fasta \
         -pre iqtree_results/aligned_consensus
 ```
 <details>
-<summary>📖 Explanation of IQ-TREE command for aligned consensus sequences</summary>
+<summary>🌳 Build Phylogenetic Tree with IQ-TREE</summary>
 
-- `mkdir -p iqtree_results` → creates the directory to store IQ-TREE output files if it doesn’t exist.  
-- `iqtree2` → runs IQ-TREE version 2, a program for phylogenetic tree inference.  
-- `-s mafft_results/aligned_consensus.fasta` → specifies the input alignment file generated by MAFFT.  
-- `-m GTR+G` → sets the substitution model to GTR (General Time Reversible) with Gamma rate heterogeneity.  
-- `-bb 1000` → performs 1000 ultrafast bootstrap replicates to assess branch support.  
-- `-nt 4` → uses 4 CPU threads for faster computation.  
-- `-pre iqtree_results/aligned_consensus` → sets the output file prefix and saves all IQ-TREE results in `iqtree_results/` with this prefix.  
+Constructs a maximum likelihood phylogenetic tree from aligned consensus sequences.  
+
+- 📂 `mafft_results/aligned_consensus.fasta` → input aligned FASTA  
+- 📂 `iqtree_results` → output folder; auto-created  
+- ⚡ `iqtree2` options:  
+  - `-m GTR+G` → substitution model (GTR with gamma rate heterogeneity)  
+  - `-bb 1000` → 1000 ultrafast bootstrap replicates  
+  - `-nt 4` → use 4 threads  
+  - `-o SRR10828835` → designate outgroup  
+  - `-pre iqtree_results/aligned_consensus` → prefix for output files  
+- 🖨 Generates tree files and bootstrap support values  
 
 </details>
+
 
 ### 🌳 Visualization with TB-Profiler + iTOL
 
@@ -2196,8 +2277,6 @@ TB-Profiler outputs can be integrated into [iTOL](https://itol.embl.de/) for ric
 * **Lineages & Sublineages**:  
   - Major M. tuberculosis lineages (1–10) can be highlighted with branch colors or background shading.  
   - Sublineages (e.g. 4.2.2.2, 2.2.1) can be shown as labels or an extra ring.  
-
-
 
 # 📖 References
 
