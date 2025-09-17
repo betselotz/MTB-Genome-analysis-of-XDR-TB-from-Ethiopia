@@ -26,18 +26,24 @@ IQ-TREE2 → phylogenetic tree construction
 R (optional) → cluster analysis and visualization
 
 
-```bash
-
-```
-
-
-
 Example Conda environment:
-
 ```bash
 conda create -n snp_env -c bioconda -c conda-forge snp-sites snp-dists -y
 conda activate snp_env
 ```
+Install R via Conda (recommended for bioinformatics)
+
+```bash
+conda create -n r_env -c conda-forge r-base -y
+conda activate r_env
+```
+We can also install additional R packages at the same time:
+```bash
+conda install -n r_env -c conda-forge r-ape r-dendextend
+```
+
+
+
 
 prepare Input
 
@@ -71,26 +77,63 @@ iqtree2 -s core_results/core.snps.aln -m GTR+G -nt AUTO -bb 1000 -pre core_resul
 
 ```
 
-Optional: Cluster isolates in R 
+Optional: R code to take your snp_distances.tsv (P distance matrix) and identify clusters with ≤5 SNP differences.
+
+Start an interactive R session
 ```bash
-library(ape)
-
-# Load SNP distance matrix
-dist <- as.dist(read.table("core_results/snp_distances.tsv", header=TRUE, row.names=1))
-
-# Hierarchical clustering
-hc <- hclust(dist, method="average")
-plot(hc, main="MTB SNP-based clustering")
-
-# Cut clusters by SNP threshold (e.g., ≤12 SNPs)
-clusters <- cutree(hc, h=12)
-print(clusters)
+conda activate r_env
 ```
-≤5 SNPs → likely recent transmission
 
-≤12 SNPs → possible epidemiological link
+```bash
+R
+```
+Then in the R prompt:
 
+```bash
+# Load libraries
+library(ape)
+library(dendextend)
 
+# Read the SNP distance matrix correctly
+dist_matrix <- read.table("core_results/snp_distances.tsv",
+                          header=TRUE, 
+                          sep="\t",       # tab-separated
+                          row.names=1,    # first column = row names
+                          check.names=FALSE,
+                          stringsAsFactors=FALSE)
+
+# Convert to numeric matrix (in case values are read as character)
+dist_matrix <- as.matrix(dist_matrix)
+mode(dist_matrix) <- "numeric"
+
+# Check first few rows and dimensions
+head(dist_matrix)
+dim(dist_matrix)
+
+# Convert to distance object
+dist_obj <- as.dist(dist_matrix)
+
+# Hierarchical clustering (average linkage)
+hc <- hclust(dist_obj, method="average")
+
+# Cut clusters at ≤5 SNPs
+clusters <- cutree(hc, h=5)
+
+# Save clusters
+write.table(clusters, file="core_results/cluster_assignments.tsv",
+            sep="\t", quote=FALSE, col.names=NA)
+
+# Plot dendrogram with colored branches
+dend <- as.dendrogram(hc)
+dend <- color_branches(dend, h=5)
+png("core_results/cluster_dendrogram.png", width=1200, height=800)
+plot(dend, main="MTB SNP Clusters (≤5 SNPs)")
+dev.off()
+
+# Print clusters to console
+print(clusters)
+
+```
 
 
 Optional Bash Script
