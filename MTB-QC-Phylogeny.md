@@ -1,5 +1,5 @@
 
-## 🧪 Methodology: MTB Genome Analysis of XDR-TB from Ethiopia
+## 🧪 MTB Genome Analysis of XDR-TB from Ethiopia
 
 This workflow performs **high-confidence genomic analysis** of **extensively drug-resistant Mycobacterium tuberculosis (XDR-TB)** strains from Ethiopia, combining raw data QC, variant calling, and phylogenetic inference.  
 
