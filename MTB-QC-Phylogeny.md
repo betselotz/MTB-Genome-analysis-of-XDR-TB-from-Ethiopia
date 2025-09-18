@@ -98,10 +98,10 @@ qualimap --help
 ```
 tb_variant_filter (COMBAT-TB)
 ```bash
-conda create -n tb_variant_filter_env python=3.9 -y
-conda activate tb_variant_filter_env
-conda install -c bioconda tb_variant_filter -y
-tb_variant_filter --help
+conda install mamba -c conda-forge
+mamba create -n tb_variant_filter_env python=3.9
+mamba activate tb_variant_filter_env
+mamba install -c bioconda tb_variant_filter
 
 ```
 BCFtools / SAMtools
