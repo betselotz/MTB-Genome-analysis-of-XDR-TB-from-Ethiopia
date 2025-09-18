@@ -79,6 +79,7 @@ conda create -n tbprofiler_env python=3.9 -y
 conda activate tbprofiler_env
 pip install tb-profiler
 tb-profiler --version
+tb-profiler update
 ```
 Snippy
 ```bash
