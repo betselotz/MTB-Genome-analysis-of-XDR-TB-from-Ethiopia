@@ -102,8 +102,16 @@ tb_variant_filter (COMBAT-TB)
 ```bash
 conda create -n tb_variant_filter_env python=3.9 -y
 conda activate tb_variant_filter_env
-pip install tb-variant-filter
+
+# 3. Add bioconda and conda-forge channels (if not already added)
+conda config --add channels defaults
+conda config --add channels conda-forge
+conda config --add channels bioconda
+
+conda install -c bioconda tb_variant_filter -y
+
 tb_variant_filter --help
+
 
 ```
 BCFtools / SAMtools
