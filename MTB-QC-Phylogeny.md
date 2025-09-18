@@ -83,15 +83,17 @@ tb-profiler update
 ```
 Snippy
 ```bash
-conda create -n snippy_env snippy=4.6.0 -y
+conda create -n snippy_env -c bioconda -c conda-forge snippy=4.6.0 -y
 conda activate snippy_env
 snippy --version
+
 ```
 Qualimap
 ```bash
-conda create -n qualimap_env qualimap=2.2.2d -y
+conda create -n qualimap_env -c bioconda -c conda-forge qualimap=2.2.2d -y
 conda activate qualimap_env
 qualimap --help
+
 ```
 tb_variant_filter (COMBAT-TB)
 ```bash
@@ -99,6 +101,7 @@ conda create -n tb_variant_filter_env python=3.9 -y
 conda activate tb_variant_filter_env
 pip install tb-variant-filter
 tb_variant_filter --help
+
 ```
 BCFtools / SAMtools
 ```bash
@@ -110,9 +113,10 @@ samtools --version
 ```
 MAFFT
 ```bash
-conda create -n mafft_env mafft=7.505 -y
+conda create -n mafft_env -c bioconda -c conda-forge mafft=7.505 -y
 conda activate mafft_env
 mafft --version
+
 ```
 IQ-TREE
 ```bash
