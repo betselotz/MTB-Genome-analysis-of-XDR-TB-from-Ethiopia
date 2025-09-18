@@ -77,10 +77,16 @@ TB-Profiler
 ```bash
 conda create -n tbprofiler_env python=3.9 -y
 conda activate tbprofiler_env
+```
+```bash
+pip install --upgrade pip
 pip install tb-profiler
 tb-profiler --version
+```
+```bash
 tb-profiler update
 ```
+
 Snippy
 ```bash
 conda create -n snippy_env -c bioconda -c conda-forge snippy=4.6.0 -y
