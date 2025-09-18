@@ -76,12 +76,10 @@ multiqc --version
 TB-Profiler
 ```bash
 conda deactivate
-conda create -n tbprofiler_env python=3.11 -y
+conda install -n base -c conda-forge mamba -y
+mamba create -n tbprofiler_env -c bioconda -c conda-forge python=3.9 tb-profiler -y
 conda activate tbprofiler_env
-conda install -c bioconda tb-profiler
 tb-profiler --version
-tb-profiler update
-
 ```
 
 Snippy
@@ -102,16 +100,8 @@ tb_variant_filter (COMBAT-TB)
 ```bash
 conda create -n tb_variant_filter_env python=3.9 -y
 conda activate tb_variant_filter_env
-
-# 3. Add bioconda and conda-forge channels (if not already added)
-conda config --add channels defaults
-conda config --add channels conda-forge
-conda config --add channels bioconda
-
 conda install -c bioconda tb_variant_filter -y
-
 tb_variant_filter --help
-
 
 ```
 BCFtools / SAMtools
