@@ -101,10 +101,11 @@ tb_variant_filter --help
 ```
 BCFtools / SAMtools
 ```bash
-conda create -n bcftools_env bcftools=1.17 samtools=1.17 -y
+conda create -n bcftools_env -c bioconda -c conda-forge bcftools=1.17 samtools=1.17 -y
 conda activate bcftools_env
 bcftools --version
 samtools --version
+
 ```
 MAFFT
 ```bash
@@ -114,7 +115,7 @@ mafft --version
 ```
 IQ-TREE
 ```bash
-conda create -n iqtree_env iqtree=2.2.2.3 -y
+conda create -n iqtree_env -c bioconda -c conda-forge iqtree=2.2.2.3 -y
 conda activate iqtree_env
 iqtree2 --version
 ```
