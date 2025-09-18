@@ -55,6 +55,10 @@ conda config --add channels defaults
 conda config --add channels bioconda
 conda config --add channels conda-forge
 ```
+Every time we install tools in a new environment, we deactivate the conda 
+```bash
+conda deactivate 
+```
 
 FASTP
 ```bash
