@@ -76,8 +76,7 @@ multiqc --version
 TB-Profiler
 ```bash
 conda deactivate
-conda install -n base -c conda-forge mamba -y
-mamba create -n tbprofiler_env -c bioconda -c conda-forge python=3.9 tb-profiler -y
+conda install -c bioconda tb-profiler
 conda activate tbprofiler_env
 tb-profiler --version
 ```
