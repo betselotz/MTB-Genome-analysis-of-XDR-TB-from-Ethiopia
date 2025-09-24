@@ -26,121 +26,83 @@ IQ-TREE2 → phylogenetic tree construction
 R (optional) → cluster analysis and visualization
 
 
-Example Conda environment:
+Create and activate SNP environment:
 ```bash
 conda create -n snp_env -c bioconda -c conda-forge snp-sites snp-dists -y
 conda activate snp_env
 ```
-Install R via Conda (recommended for bioinformatics)
+Create and activate R environment:
 
 ```bash
 conda create -n r_env -c conda-forge r-base -y
 conda activate r_env
-```
-We can also install additional R packages at the same time:
-```bash
-conda install -n r_env -c conda-forge r-ape r-dendextend
+conda install -n r_env -c conda-forge r-ape r-dendextend -y
 ```
 
 
+Step 2: Prepare Input
 
-
-prepare Input
-
-Place your concatenated FASTA file here:
-```bash
-consensus_sequences/all_consensus.fasta
-```
-
-Alternatively, we can place individual sample FASTAs in consensus_sequences/ and concatenate them:
+Concatenate all FASTA files:
 ```bash
 cat consensus_sequences/*.fasta > consensus_sequences/all_consensus.fasta
 ```
-
-Run Core SNP Workflow
-Manual commands:
+Step 3: Extract SNPs
 ```bash
-# Create output folder
-mkdir -p core_results
-
-# Align all sequences
-mafft --auto consensus_sequences/all_consensus.fasta > core_results/core.aln
-
-# Extract SNPs only
-snp-sites -o core_results/core.snps.aln core_results/core.aln
-
-# Compute pairwise SNP distances
-snp-dists core_results/core.snps.aln > core_results/snp_distances.tsv
-
-# Build phylogenetic tree
-iqtree2 -s core_results/core.snps.aln -m GTR+G -nt AUTO -bb 1000 -pre core_results/core
-
+conda activate snp_env
+snp-sites -o consensus_sequences/all_consensus_snps.fasta consensus_sequences/all_consensus.fasta
 ```
-
-Optional: R code to take your snp_distances.tsv (P distance matrix) and identify clusters with ≤5 SNP differences.
-
-Start an interactive R session
+Step 4: Compute Pairwise SNP Distances
+```bash
+snp-dists consensus_sequences/all_consensus_snps.fasta > consensus_sequences/snp_distances.tsv
+```
+Step 5: Cluster Genomes in R
 ```bash
 conda activate r_env
-```
-
-```bash
 R
 ```
-Then in the R prompt:
 
+Inside R:
 ```bash
-# Load libraries
 library(ape)
 library(dendextend)
 
-# Read the SNP distance matrix correctly
-dist_matrix <- read.table("core_results/snp_distances.tsv",
-                          header=TRUE, 
-                          sep="\t",       # tab-separated
-                          row.names=1,    # first column = row names
-                          check.names=FALSE,
-                          stringsAsFactors=FALSE)
-
-# Convert to numeric matrix (in case values are read as character)
-dist_matrix <- as.matrix(dist_matrix)
-mode(dist_matrix) <- "numeric"
-
-# Check first few rows and dimensions
-head(dist_matrix)
-dim(dist_matrix)
-
-# Convert to distance object
+snp_dist <- read.table("consensus_sequences/snp_distances.tsv", header=TRUE, row.names=1, check.names=FALSE, sep="\t")
+dist_matrix <- as.matrix(snp_dist)
 dist_obj <- as.dist(dist_matrix)
-
-# Hierarchical clustering (average linkage)
 hc <- hclust(dist_obj, method="average")
-
-# Cut clusters at ≤5 SNPs
 clusters <- cutree(hc, h=5)
-
-# Save clusters
-write.table(clusters, file="core_results/cluster_assignments.tsv",
-            sep="\t", quote=FALSE, col.names=NA)
-
-# Plot dendrogram with colored branches
+write.table(clusters, file="consensus_sequences/cluster_assignments.tsv", sep="\t", quote=FALSE, col.names=NA)
 dend <- as.dendrogram(hc)
 dend <- color_branches(dend, h=5)
-png("core_results/cluster_dendrogram.png", width=1200, height=800)
-plot(dend, main="MTB SNP Clusters (≤5 SNPs)")
+plot(dend, main="MTB SNP Clustering (≤5 SNPs)")
+pdf("consensus_sequences/snp_clustering_dendrogram.pdf", width=10, height=8)
+plot(dend, main="MTB SNP Clustering (≤5 SNPs)")
 dev.off()
-
-# Print clusters to console
-print(clusters)
-
 ```
 
 
-Optional Bash Script
-
-You can automate all steps using run_snp_clustering.sh:
-
+Step 6: Cluster and Visualize in R
 ```bash
-chmod +x run_snp_clustering.sh
-./run_snp_clustering.sh
+conda activate r_env
+R
 ```
+Then run this R code:
+```bash
+library(ape)
+library(dendextend)
+
+snp_dist <- read.table("consensus_sequences/snp_distances.tsv", header=TRUE, row.names=1, check.names=FALSE, sep="\t")
+dist_matrix <- as.matrix(snp_dist)
+dist_obj <- as.dist(dist_matrix)
+hc <- hclust(dist_obj, method="average")
+clusters <- cutree(hc, h=5)
+write.table(clusters, file="consensus_sequences/cluster_assignments.tsv", sep="\t", quote=FALSE, col.names=NA)
+dend <- as.dendrogram(hc)
+dend <- color_branches(dend, h=5)
+plot(dend, main="MTB SNP Clustering (≤5 SNPs)")
+pdf("consensus_sequences/snp_clustering_dendrogram.pdf", width=10, height=8)
+plot(dend, main="MTB SNP Clustering (≤5 SNPs)")
+dev.off()
+```
+
+
