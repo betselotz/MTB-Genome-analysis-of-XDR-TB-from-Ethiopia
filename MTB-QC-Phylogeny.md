@@ -120,9 +120,10 @@ mafft --version
 ```
 IQ-TREE
 ```bash
-conda create -n iqtree_env -c bioconda -c conda-forge iqtree=2.2.2.3 -y
+conda create -n iqtree_env python=3.11 -y
 conda activate iqtree_env
-iqtree2 --version
+conda install -c bioconda iqtree -y
+iqtree3 -h
 ```
 iTOL
 Web-based tool: https://itol.embl.de
