@@ -92,6 +92,44 @@ plot(dend, main="MTB SNP Clustering (≤5 SNPs)")
 dev.off()
 ```
 
+
+
+another steps
+```bash
+nano snp_clustering.R
+```
+
+
+```bash
+#!/usr/bin/env Rscript
+file <- "snp_distances.tsv"
+if (!file.exists(file)) stop(paste("File not found:", file))
+df <- read.table(file, header=TRUE, row.names=1, sep="\t", check.names=FALSE, comment.char="")
+mat <- as.matrix(df)
+hc <- hclust(as.dist(mat), method="average")
+cutoff <- 12
+max_height <- max(hc$height)
+if (cutoff >= max_height) {
+  clusters <- cutree(hc, k=1)
+} else {
+  clusters <- cutree(hc, h=cutoff)
+}
+png("snp_clustering_dendrogram.png", width=1200, height=800)
+plot(hc, main=paste("Hierarchical Clustering (cutoff =", cutoff, "SNPs)"), xlab="", sub="")
+if (cutoff < max_height) rect.hclust(hc, h=cutoff, border="red")
+dev.off()
+png("snp_clustering_heatmap.png", width=1200, height=1200)
+heatmap(mat, Rowv=as.dendrogram(hc), Colv=as.dendrogram(hc), scale="none",
+        col=heat.colors(100), margins=c(10,10),
+        main=paste("SNP Distance Heatmap (cutoff =", cutoff, "SNPs)"))
+dev.off()
+write.table(data.frame(Sample=names(clusters), Cluster=clusters),
+            file="snp_clusters.tsv", sep="\t", quote=FALSE, row.names=FALSE)
+cat("Finished clustering with cutoff =", cutoff, "SNPs\n")
+cat("- snp_clustering_dendrogram.png\n- snp_clustering_heatmap.png\n- snp_clusters.tsv\n")
+```
+
+
 Step 7: Annotate Clusters with Metadata
 
 1. Prepare a metadata file (metadata.tsv) with at least these columns:
