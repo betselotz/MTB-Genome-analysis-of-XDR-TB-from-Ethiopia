@@ -49,7 +49,8 @@ cat consensus_sequences/*.fasta > consensus_sequences/all_consensus.fasta
 Step 3: Align FASTA sequences using MAFFT
 ```bash
 conda activate mafft_env
-mafft --auto consensus_sequences/all_consensus.fasta > consensus_sequences/all_consensus_aligned.fasta
+mafft --thread 16 --auto consensus_sequences/all_consensus.fasta > consensus_sequences/all_consensus_aligned.fasta
+
 ```
 Verify sequence lengths
 ```bash
